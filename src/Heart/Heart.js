@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { animare } from 'animare';
 import { useEffect } from 'react';
 import styles from './Heart.module.css';

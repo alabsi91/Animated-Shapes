@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useRef, useState } from 'react';
