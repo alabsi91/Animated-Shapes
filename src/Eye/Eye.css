@@ -1,0 +1,61 @@
+body {
+  background-color: black;
+  margin: 0;
+  --stroke-width: 2px;
+  --stroke-color: white;
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+circle {
+  fill: none;
+  stroke: var(--stroke-color);
+  stroke-width: calc(var(--stroke-width) / 2);
+  transform-origin: center;
+}
+
+.toggle-pannel-arrow {
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  width: 24px;
+  height: 24px;
+  fill: white;
+  transform-origin: center;
+  cursor: pointer;
+}
+
+.controls {
+  position: fixed;
+  left: 0;
+  top: 70px;
+  padding-left: 20px;
+}
+
+.inputs {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 20px;
+}
+
+.inputs[type='checkbox'] {
+  display: inline-block;
+}
+
+.inputs[type='color'] {
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.labels {
+  color: white;
+  font-size: 18px;
+  font-family: 'Courier New', Courier, monospace;
+}

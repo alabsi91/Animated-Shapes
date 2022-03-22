@@ -1,0 +1,12 @@
+body {
+  margin: 0;
+  overflow: hidden;
+}
+.container {
+}
+.canvas {
+  /* width: 99vw;
+  height: 99vh; */
+  background-color: #000;
+}
+

@@ -1,0 +1,166 @@
+body {
+  background-color: black;
+  margin: 0;
+  --width: 500px;
+  --height: 500px;
+  --thickness: 50px;
+  --bg-color: black;
+  --border-color: white;
+  --border-width: 2px;
+}
+
+#tridiv {
+  perspective: 1800px;
+  position: absolute;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  font-size: 100%;
+  pointer-events: none;
+}
+.face {
+  box-shadow: inset 0px 0px 10px 4px rgb(0 0 0 / 20%);
+}
+.scene,
+.shape,
+.face,
+.face-wrapper,
+.cr {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+.scene {
+  width: 80em;
+  height: 80em;
+  top: 50%;
+  left: 50%;
+  margin: -40em 0 0 -40em;
+}
+.shape {
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform-origin: 50%;
+}
+.face,
+.face-wrapper {
+  overflow: hidden;
+  transform-origin: 0 0;
+  backface-visibility: hidden;
+}
+.face {
+  background-size: 100% 100% !important;
+  background-position: center;
+}
+.face-wrapper .face {
+  left: 100%;
+  width: 100%;
+  height: 100%;
+}
+.photon-shader {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+.side {
+  left: 50%;
+}
+.cr,
+.cr .side {
+  height: 100%;
+}
+[class*='cuboid'] .ft,
+[class*='cuboid'] .bk {
+  width: 100%;
+  height: 100%;
+}
+[class*='cuboid'] .bk {
+  left: 100%;
+}
+[class*='cuboid'] .rt {
+  transform: rotateY(-90deg) translateX(-50%);
+}
+[class*='cuboid'] .lt {
+  transform: rotateY(90deg) translateX(-50%);
+}
+[class*='cuboid'] .tp {
+  transform: rotateX(90deg) translateY(-50%);
+}
+[class*='cuboid'] .bm {
+  transform: rotateX(-90deg) translateY(-50%);
+}
+[class*='cuboid'] .lt {
+  left: 100%;
+}
+[class*='cuboid'] .bm {
+  top: 100%;
+}
+/* .cub-1 styles */
+.cub-1 {
+  transform: translate3D(0em, 0em, 0em) rotateX(90deg) rotateY(0deg) rotateZ(0deg);
+  opacity: 1;
+  width: var(--width);
+  height: var(--height);
+  margin: calc(var(--height) / -2) 0 0 calc(var(--width) / -2);
+}
+.cub-1 .ft {
+  transform: translateZ(calc(var(--thickness) / 2));
+}
+.cub-1 .bk {
+  transform: translateZ(calc(var(--thickness) / -2)) rotateY(180deg);
+}
+.cub-1 .rt,
+.cub-1 .lt {
+  width: var(--thickness);
+  height: var(--height);
+}
+.cub-1 .tp,
+.cub-1 .bm {
+  width: var(--width);
+  height: var(--thickness);
+}
+.cub-1 .face {
+  background-color: var(--bg-color);
+  border: solid var(--border-width) var(--border-color);
+  box-sizing: border-box;
+}
+
+.toggle-pannel-arrow {
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  width: 24px;
+  height: 24px;
+  fill: white;
+  transform-origin: center;
+  cursor: pointer;
+}
+
+.controls {
+  position: fixed;
+  left: 0;
+  top: 70px;
+  padding-left: 20px;
+}
+
+.inputs {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 20px;
+}
+.inputs[type='checkbox'] {
+  display: inline-block;
+}
+.inputs[type='color'] {
+  display: inline-block;
+  margin-right: 10px;
+}
+.labels {
+  color: white;
+  font-size: 18px;
+  font-family: 'Courier New', Courier, monospace;
+}

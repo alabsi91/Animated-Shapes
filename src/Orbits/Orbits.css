@@ -1,0 +1,60 @@
+body {
+  background-color: black;
+  margin: 0;
+}
+
+.orbit {
+  transform-origin: center;
+}
+.container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+ellipse {
+  transform-origin: center;
+}
+
+circle {
+    background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.5) 100%);
+}
+
+.toggle-pannel-arrow {
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  width: 24px;
+  height: 24px;
+  fill: white;
+  transform-origin: center;
+  cursor: pointer;
+}
+
+.controls {
+  position: fixed;
+  left: 0;
+  top: 70px;
+  padding-left: 20px;
+}
+
+.inputs {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 20px;
+}
+.inputs[type='checkbox'] {
+  display: inline-block;
+}
+.inputs[type='color'] {
+  display: inline-block;
+  margin-right: 10px;
+}
+.labels {
+  color: white;
+  font-size: 18px;
+  font-family: 'Courier New', Courier, monospace;
+}
