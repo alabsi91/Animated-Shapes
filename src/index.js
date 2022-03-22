@@ -1,6 +1,8 @@
 /* eslint-disable no-unused-vars */
+import { animare, ease } from 'animare';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import styles from './index.module.css';
 
 const SwirlingLines = () => {
   document.title = 'Swirling Lines';
@@ -84,84 +86,84 @@ const App = () => {
         return <Home />;
       case '/SwirlingLines':
         return (
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<Loading/>}>
             <SwirlingLines />
           </React.Suspense>
         );
 
       case '/BouncingShit':
         return (
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<Loading/>}>
             <BouncingShit />
           </React.Suspense>
         );
 
       case '/MasonryLayout':
         return (
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<Loading/>}>
             <MasonryLayout />
           </React.Suspense>
         );
 
       case '/Heart':
         return (
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<Loading/>}>
             <Heart />
           </React.Suspense>
         );
 
       case '/PingPong':
         return (
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<Loading/>}>
             <PingPong />
           </React.Suspense>
         );
 
       case '/Squares':
         return (
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<Loading/>}>
             <Squares />
           </React.Suspense>
         );
 
       case '/Orbits':
         return (
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<Loading/>}>
             <Orbits />
           </React.Suspense>
         );
 
       case '/Clock':
         return (
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<Loading/>}>
             <Clock />
           </React.Suspense>
         );
 
       case '/Cuboid':
         return (
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<Loading/>}>
             <Cuboid />
           </React.Suspense>
         );
 
       case '/Eye':
         return (
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<Loading/>}>
             <Eye />
           </React.Suspense>
         );
 
       case '/Trinity':
         return (
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<Loading/>}>
             <Trinity />
           </React.Suspense>
         );
 
       default:
         return (
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<Loading/>}>
             <Home />
           </React.Suspense>
         );
@@ -171,9 +173,34 @@ const App = () => {
   return checkUrl();
 };
 
+const Loading = () => {
+  const animation = () => {
+    const outter = document.querySelector(`.${styles.outter}`);
+    const inner = document.querySelector(`.${styles.inner}`);
+    animare({ to: 30, duration: 1000, repeat: -1, ease: ease.inOut.quad }, ([r]) => {
+      outter.style.width = `${r}vw`;
+    });
+    animare({ to: 30, duration: 1000, delay: 20, repeat: -1, ease: ease.inOut.quad }, ([r]) => {
+      inner.style.width = `${r}vw`;
+    });
+  };
+
+  React.useEffect(() => {
+    animation();
+  }, []);
+
+  return (
+    <div className={styles.background}>
+      <div className={styles.circle + ' ' + styles.outter}>
+        <div className={styles.circle + ' ' + styles.inner} />
+      </div>
+    </div>
+  );
+};
+
 ReactDOM.render(
   <React.StrictMode>
-    <React.Suspense fallback={<div>Loading...</div>}>
+    <React.Suspense fallback={Loading}>
       <App />
     </React.Suspense>
   </React.StrictMode>,

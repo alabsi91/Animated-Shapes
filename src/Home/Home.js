@@ -24,10 +24,8 @@ const Card = ({ path }) => {
   const [pngUrl, setPngUrl] = useState('');
   const [gifUrl, setGifUrl] = useState('');
 
-  const navigate = (e) => {
+  const navigate = () => {
     window.location.href = `/${path}`;
-    // e.preventDefault();
-    // window.history.pushState(null, null, `/${path}`);
   };
 
   const getUrl = () => {
@@ -49,7 +47,7 @@ const Card = ({ path }) => {
 
   useEffect(() => {
     getUrl();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
