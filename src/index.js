@@ -4,73 +4,74 @@ import ReactDOM from 'react-dom';
 
 const SwirlingLines = () => {
   document.title = 'Swirling Lines';
-  const Component = require('./SwirlingLines/SwirlingLines').default;
+  const Component = React.lazy(() => import('./SwirlingLines/SwirlingLines'));
+  // const Component = require('./SwirlingLines/SwirlingLines').default;
   return <Component />;
 };
 
 const BouncingShit = () => {
   document.title = 'Bouncing Shit';
-  const Component = require('./BouncingShit/BouncingShit').default;
+  const Component = React.lazy(() => import('./BouncingShit/BouncingShit'));
   return <Component />;
 };
 
 const MasonryLayout = () => {
   document.title = 'Masonry Layout';
-  const Component = require('./MasonryLayout/MasonryLayout').default;
+  const Component = React.lazy(() => import('./MasonryLayout/MasonryLayout'));
   return <Component />;
 };
 
 const Heart = () => {
   document.title = 'Heart';
-  const Component = require('./Heart/Heart').default;
+  const Component = React.lazy(() => import('./Heart/Heart'));
   return <Component />;
 };
 
 const PingPong = () => {
   document.title = 'Ping Pong';
-  const Component = require('./PingPong/PingPong').default;
+  const Component = React.lazy(() => import('./PingPong/PingPong'));
   return <Component />;
 };
 
 const Squares = () => {
   document.title = 'Squares';
-  const Component = require('./Squares/Squares').default;
+  const Component = React.lazy(() => import('./Squares/Squares'));
   return <Component />;
 };
 
 const Orbits = () => {
   document.title = 'Orbits';
-  const Component = require('./Orbits/Orbits').default;
+  const Component = React.lazy(() => import('./Orbits/Orbits'));
   return <Component />;
 };
 
 const Clock = () => {
   document.title = 'Clock';
-  const Component = require('./Clock/Clock').default;
+  const Component = React.lazy(() => import('./Clock/Clock'));
   return <Component />;
 };
 
 const Cuboid = () => {
   document.title = 'Cuboid';
-  const Component = require('./Cuboid/Cuboid').default;
+  const Component = React.lazy(() => import('./Cuboid/Cuboid'));
   return <Component />;
 };
 
 const Eye = () => {
   document.title = 'Eye';
-  const Component = require('./Eye/Eye').default;
+  const Component = React.lazy(() => import('./Eye/Eye'));
   return <Component />;
 };
 
 const Trinity = () => {
   document.title = 'Trinity';
-  const Component = require('./Trinity/Trinity').default;
+  const Component = React.lazy(() => import('./Trinity/Trinity'));
   return <Component />;
 };
 
 const Home = () => {
   document.title = 'Animated Shapes';
-  const Component = require('./Home/Home').default;
+  const Component = React.lazy(() => import('./Home/Home'));
   return <Component />;
 };
 
@@ -81,45 +82,96 @@ const App = () => {
     case '/':
       return <Home />;
     case '/SwirlingLines':
-      return <SwirlingLines />;
+      return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <SwirlingLines />
+        </React.Suspense>
+      );
+
     case '/BouncingShit':
-      return <BouncingShit />;
+      return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <BouncingShit />
+        </React.Suspense>
+      );
+
     case '/MasonryLayout':
-      return <MasonryLayout />;
+      return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <MasonryLayout />
+        </React.Suspense>
+      );
+
     case '/Heart':
-      return <Heart />;
+      return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Heart />
+        </React.Suspense>
+      );
+
     case '/PingPong':
-      return <PingPong />;
+      return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <PingPong />
+        </React.Suspense>
+      );
+
     case '/Squares':
-      return <Squares />;
+      return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Squares />
+        </React.Suspense>
+      );
+
     case '/Orbits':
-      return <Orbits />;
+      return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Orbits />
+        </React.Suspense>
+      );
+
     case '/Clock':
-      return <Clock />;
+      return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Clock />
+        </React.Suspense>
+      );
+
     case '/Cuboid':
-      return <Cuboid />;
+      return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Cuboid />
+        </React.Suspense>
+      );
+
     case '/Eye':
-      return <Eye />;
+      return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Eye />
+        </React.Suspense>
+      );
+
     case '/Trinity':
-      return <Trinity />;
+      return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Trinity />
+        </React.Suspense>
+      );
+
     default:
-      return <Home />;
+      return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Home />
+        </React.Suspense>
+      );
   }
 };
 
 ReactDOM.render(
   <React.StrictMode>
-    {/* {Squares()} */}
-    {/* {SwirlingLines()} */}
-    {/* {Heart()} */}
-    {/* {BouncingShit()} */}
-    {/* {MasonryLayout()} */}
-    {/* {PingPong()} */}
-    {/* {Orbits()} */}
-    {/* {Clock()} */}
-    {/* {Cuboid()} */}
-    {/* {Eye()} */}
-    <App />
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <App />
+    </React.Suspense>
   </React.StrictMode>,
   document.getElementById('root')
 );
