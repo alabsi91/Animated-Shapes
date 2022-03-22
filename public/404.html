@@ -1,19 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>404</title>
-</head>
+  </head>
 
-<body>
-
-</body>
-<script>
-    (function redirecte(L) {
-        window.open((L.protocol + "//" + L.hostname), "_self");
-    }(window.location))
-</script>
-
+  <body></body>
+  <script>
+    var path = window.location.pathname;
+    var url = window.location.protocol + '//' + window.location.hostname + path;
+    window.location.href = url;
+    console.log(url)
+  </script>
 </html>
