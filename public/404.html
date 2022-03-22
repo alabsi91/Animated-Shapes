@@ -9,8 +9,7 @@
   <body></body>
   <script>
     var path = window.location.pathname;
-    var url = window.location.protocol + '//' + window.location.hostname + path;
-    window.location.href = url;
-    console.log(url)
+    window.location.href = '/';
+    window.history.pushState(null, null, path);
   </script>
 </html>

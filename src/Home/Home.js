@@ -24,8 +24,10 @@ const Card = ({ path }) => {
   const [pngUrl, setPngUrl] = useState('');
   const [gifUrl, setGifUrl] = useState('');
 
-  const navigate = () => {
+  const navigate = (e) => {
     window.location.href = `/${path}`;
+    // e.preventDefault();
+    // window.history.pushState(null, null, `/${path}`);
   };
 
   const getUrl = () => {

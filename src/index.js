@@ -76,95 +76,99 @@ const Home = () => {
 };
 
 const App = () => {
-  const path = window.location.pathname;
+  const checkUrl = () => {
+    const path = window.location.pathname;
 
-  switch (path) {
-    case '/':
-      return <Home />;
-    case '/SwirlingLines':
-      return (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <SwirlingLines />
-        </React.Suspense>
-      );
+    switch (path) {
+      case '/':
+        return <Home />;
+      case '/SwirlingLines':
+        return (
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <SwirlingLines />
+          </React.Suspense>
+        );
 
-    case '/BouncingShit':
-      return (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <BouncingShit />
-        </React.Suspense>
-      );
+      case '/BouncingShit':
+        return (
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <BouncingShit />
+          </React.Suspense>
+        );
 
-    case '/MasonryLayout':
-      return (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <MasonryLayout />
-        </React.Suspense>
-      );
+      case '/MasonryLayout':
+        return (
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <MasonryLayout />
+          </React.Suspense>
+        );
 
-    case '/Heart':
-      return (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <Heart />
-        </React.Suspense>
-      );
+      case '/Heart':
+        return (
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Heart />
+          </React.Suspense>
+        );
 
-    case '/PingPong':
-      return (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <PingPong />
-        </React.Suspense>
-      );
+      case '/PingPong':
+        return (
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <PingPong />
+          </React.Suspense>
+        );
 
-    case '/Squares':
-      return (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <Squares />
-        </React.Suspense>
-      );
+      case '/Squares':
+        return (
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Squares />
+          </React.Suspense>
+        );
 
-    case '/Orbits':
-      return (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <Orbits />
-        </React.Suspense>
-      );
+      case '/Orbits':
+        return (
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Orbits />
+          </React.Suspense>
+        );
 
-    case '/Clock':
-      return (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <Clock />
-        </React.Suspense>
-      );
+      case '/Clock':
+        return (
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Clock />
+          </React.Suspense>
+        );
 
-    case '/Cuboid':
-      return (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <Cuboid />
-        </React.Suspense>
-      );
+      case '/Cuboid':
+        return (
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Cuboid />
+          </React.Suspense>
+        );
 
-    case '/Eye':
-      return (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <Eye />
-        </React.Suspense>
-      );
+      case '/Eye':
+        return (
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Eye />
+          </React.Suspense>
+        );
 
-    case '/Trinity':
-      return (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <Trinity />
-        </React.Suspense>
-      );
+      case '/Trinity':
+        return (
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Trinity />
+          </React.Suspense>
+        );
 
-    default:
-      return (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <Home />
-        </React.Suspense>
-      );
-  }
+      default:
+        return (
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <Home />
+          </React.Suspense>
+        );
+    }
+  };
+
+  return checkUrl();
 };
 
 ReactDOM.render(
