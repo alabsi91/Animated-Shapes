@@ -30,7 +30,7 @@ export default function Monoton() {
               key: Math.random() * 100,
               className: 'letters',
             },
-            L?.props?.children.map(c =>
+            L?.props?.children?.map(c =>
               cloneElement(c, {
                 key: Math.random() * 100,
                 style: {
@@ -90,7 +90,7 @@ export default function Monoton() {
 
         if (isRgb) {
           const b = animare(
-            { from: [255, 255, 255], to: [255, 0, 0], duration: 2000, delay: p * 200, autoPlay: false },
+            { from: [255, 255, 255], to: [255, 0, 0], duration: 2000, delay: p * delay + i * 50, autoPlay: false },
             callback_color
           )
             .next({ to: [0, 0, 255] })
@@ -108,6 +108,7 @@ export default function Monoton() {
     const pathes = document.querySelectorAll('.letters path');
     while (isDisco) {
       await new Promise(resolve => setTimeout(resolve, 500));
+      if (!isDisco) return;
       for (let i = 0; i < pathes.length; i++) {
         const path = pathes[i];
         const color = generateColor();
@@ -127,13 +128,14 @@ export default function Monoton() {
 
   const stop = () => {
     for (let i = 0; i < animations.length; i++) {
-      animations[i].stop();
-      animationRgb[i]?.stop();
+      animations[i].stop('25%');
+      animationRgb[i]?.stop('25%');
     }
   };
 
   useEffect(() => {
     setupAnimation();
+    if (isDisco) disco();
   }, [text]);
 
   useEffect(() => {
@@ -172,7 +174,7 @@ export default function Monoton() {
   const onRGBChange = async e => {
     isRgb = e.target.checked;
     document.getElementById('random-check').disabled = isRgb;
-    // document.getElementById('disco-check').disabled = isRgb;
+    document.getElementById('disco-check').disabled = isRgb;
 
     if (isRgb) {
       setupAnimation();
@@ -193,7 +195,7 @@ export default function Monoton() {
     }
   };
 
-  const onDiscoChange = async e => {
+  const onDiscoChange = e => {
     isDisco = e.target.checked;
     document.getElementById('random-check').disabled = isDisco;
     document.getElementById('rgb-check').disabled = isDisco;
@@ -203,8 +205,7 @@ export default function Monoton() {
       disco();
     } else {
       if (isRgb) setupAnimation();
-      await new Promise(resolve => setTimeout(resolve, 500));
-      document.querySelectorAll('.trinity path').forEach(e => {
+      document.querySelectorAll('.letters path').forEach(e => {
         if (isRandomColor) {
           const color = generateColor();
           e.style.stroke = color;
@@ -212,7 +213,7 @@ export default function Monoton() {
           return;
         }
         e.style.removeProperty('stroke');
-        isGlowing ? (e.style.filter = `drop-shadow(0px 0px 3px var(--stroke-color))`) : e.style.removeProperty('filter');
+        isGlowing ? (e.style.filter = `drop-shadow(0px 0px 3px var(--color))`) : e.style.removeProperty('filter');
       });
     }
   };
@@ -301,15 +302,7 @@ export default function Monoton() {
         <label className='labels' htmlFor='space'>
           Space:
         </label>
-        <input
-          className='inputs'
-          type='number'
-          step={5}
-          min='-200'
-          name='space'
-          defaultValue={0}
-          onChange={onSpaceChange}
-        />
+        <input className='inputs' type='number' step={5} name='space' defaultValue={0} onChange={onSpaceChange} />
 
         <label className='labels' htmlFor='stroke-width'>
           Stroke Width:

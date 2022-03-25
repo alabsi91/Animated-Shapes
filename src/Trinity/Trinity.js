@@ -107,6 +107,7 @@ export default function Trinity() {
     const pathes = document.querySelectorAll('.trinity path');
     while (isDisco) {
       await new Promise(resolve => setTimeout(resolve, 500));
+      if (!isDisco) return;
       for (let i = 0; i < pathes.length; i++) {
         const path = pathes[i];
         const color = generateColor();
@@ -133,6 +134,7 @@ export default function Trinity() {
 
   useEffect(() => {
     setupAnimation();
+    if (isDisco) disco();
   }, [count]);
 
   useEffect(() => {
@@ -200,7 +202,7 @@ export default function Trinity() {
     }
   };
 
-  const onDiscoChange = async e => {
+  const onDiscoChange = e => {
     isDisco = e.target.checked;
     document.getElementById('random-check').disabled = isDisco;
     document.getElementById('rgb-check').disabled = isDisco;
@@ -210,7 +212,6 @@ export default function Trinity() {
       disco();
     } else {
       if (isRgb) setupAnimation();
-      await new Promise(resolve => setTimeout(resolve, 500));
       document.querySelectorAll('.trinity path').forEach(e => {
         if (isRandomColor) {
           const color = generateColor();

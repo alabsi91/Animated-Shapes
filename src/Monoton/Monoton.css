@@ -1,17 +1,19 @@
 body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  min-height: 100vh;
+  overflow-x: hidden;
+
   --size: 200px;
   --color: white;
   --stroke: 1px;
-  --space : 0px;
+  --space: 0px;
 }
 
 .container {
-  display: flex;
-  height: 100vh;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  text-align: center;
 }
 
 .letters {
@@ -51,9 +53,6 @@ body {
   display: block;
   margin-top: 5px;
   margin-bottom: 20px;
-}
-.inputs[type='number'] {
-  width: 90%;
 }
 .inputs[type='checkbox'] {
   display: inline-block;
