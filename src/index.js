@@ -71,6 +71,12 @@ const Trinity = () => {
   return <Component />;
 };
 
+const Monoton = () => {
+  document.title = 'Monoton';
+  const Component = React.lazy(() => import('./Monoton/Monoton'));
+  return <Component />;
+};
+
 const Home = () => {
   document.title = 'Animated Shapes';
   const Component = React.lazy(() => import('./Home/Home'));
@@ -86,84 +92,91 @@ const App = () => {
         return <Home />;
       case '/SwirlingLines':
         return (
-          <React.Suspense fallback={<Loading/>}>
+          <React.Suspense fallback={<Loading />}>
             <SwirlingLines />
           </React.Suspense>
         );
 
       case '/BouncingShit':
         return (
-          <React.Suspense fallback={<Loading/>}>
+          <React.Suspense fallback={<Loading />}>
             <BouncingShit />
           </React.Suspense>
         );
 
       case '/MasonryLayout':
         return (
-          <React.Suspense fallback={<Loading/>}>
+          <React.Suspense fallback={<Loading />}>
             <MasonryLayout />
           </React.Suspense>
         );
 
       case '/Heart':
         return (
-          <React.Suspense fallback={<Loading/>}>
+          <React.Suspense fallback={<Loading />}>
             <Heart />
           </React.Suspense>
         );
 
       case '/PingPong':
         return (
-          <React.Suspense fallback={<Loading/>}>
+          <React.Suspense fallback={<Loading />}>
             <PingPong />
           </React.Suspense>
         );
 
       case '/Squares':
         return (
-          <React.Suspense fallback={<Loading/>}>
+          <React.Suspense fallback={<Loading />}>
             <Squares />
           </React.Suspense>
         );
 
       case '/Orbits':
         return (
-          <React.Suspense fallback={<Loading/>}>
+          <React.Suspense fallback={<Loading />}>
             <Orbits />
           </React.Suspense>
         );
 
       case '/Clock':
         return (
-          <React.Suspense fallback={<Loading/>}>
+          <React.Suspense fallback={<Loading />}>
             <Clock />
           </React.Suspense>
         );
 
       case '/Cuboid':
         return (
-          <React.Suspense fallback={<Loading/>}>
+          <React.Suspense fallback={<Loading />}>
             <Cuboid />
           </React.Suspense>
         );
 
       case '/Eye':
         return (
-          <React.Suspense fallback={<Loading/>}>
+          <React.Suspense fallback={<Loading />}>
             <Eye />
           </React.Suspense>
         );
 
       case '/Trinity':
         return (
-          <React.Suspense fallback={<Loading/>}>
+          <React.Suspense fallback={<Loading />}>
             <Trinity />
+          </React.Suspense>
+        );
+
+      case '/Monoton':
+        return (
+          <React.Suspense fallback={<Loading />}>
+            <Monoton />
           </React.Suspense>
         );
 
       default:
         return (
-          <React.Suspense fallback={<Loading/>}>
+          <React.Suspense fallback={<Loading />}>
             <Home />
           </React.Suspense>
         );

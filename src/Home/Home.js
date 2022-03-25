@@ -13,6 +13,7 @@ export default function Home() {
       <Card path='Squares' />
       <Card path='PingPong' />
       <Card path='BouncingShit' />
+      <Card path='Monoton' />
     </div>
   );
 }

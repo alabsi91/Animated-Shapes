@@ -1,0 +1,69 @@
+body {
+  --size: 200px;
+  --color: white;
+  --stroke: 1px;
+  --space : 0px;
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.letters {
+  fill: none;
+  width: var(--size);
+  height: calc(var(--size) + 50px);
+  margin-right: var(--space);
+}
+
+.container :last-child {
+  margin-right: 0;
+}
+
+.letters path {
+  stroke: var(--color);
+  stroke-width: var(--stroke);
+  stroke-linecap: round;
+}
+
+.toggle-pannel-arrow {
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  width: 24px;
+  height: 24px;
+  fill: white;
+  transform-origin: center;
+  cursor: pointer;
+}
+.controls {
+  position: fixed;
+  left: 0;
+  top: 70px;
+  padding-left: 20px;
+}
+.inputs {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 20px;
+}
+.inputs[type='number'] {
+  width: 90%;
+}
+.inputs[type='checkbox'] {
+  display: inline-block;
+}
+.inputs[type='color'] {
+  display: inline-block;
+  margin-right: 10px;
+}
+.labels {
+  color: white;
+  font-size: 18px;
+  font-family: 'Courier New', Courier, monospace;
+}
