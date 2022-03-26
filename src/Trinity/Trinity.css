@@ -1,8 +1,8 @@
 body {
   background-color: black;
   margin: 0;
-  --stroke-width : 2px;
-  --stroke-color : white;
+  --stroke-width: 2px;
+  --stroke-color: white;
 }
 
 .container {
@@ -28,9 +28,8 @@ body {
   stroke: var(--stroke-color);
   stroke-width: var(--stroke-width);
   stroke-linecap: round;
-  transition: stroke 250ms ;
+  transition: stroke 250ms;
 }
-
 
 .toggle-pannel-arrow {
   position: fixed;
@@ -48,6 +47,8 @@ body {
   left: 0;
   top: 70px;
   padding-left: 20px;
+  height: calc(100vh - 70px);
+  overflow-x: hidden;
 }
 .inputs {
   display: block;

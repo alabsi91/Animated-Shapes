@@ -8,7 +8,7 @@ import Letters from './Letters';
 let animations = [],
   animationRgb = [],
   duration = 2000,
-  delay = 0,
+  delay = 150,
   isRandomColor = false,
   isRgb = false,
   isDisco = false,
@@ -90,12 +90,11 @@ export default function Monoton() {
 
         if (isRgb) {
           const b = animare(
-            { from: [255, 255, 255], to: [255, 0, 0], duration: 2000, delay: p * delay + i * 50, autoPlay: false },
+            { from: [255, 0, 0], to: [0, 0, 255], duration: 2000, delay: p * delay + i * 50, autoPlay: false },
             callback_color
           )
-            .next({ to: [0, 0, 255] })
             .next({ to: [0, 255, 0] })
-            .next({ to: [255, 255, 255] });
+            .next({ to: [255, 0, 0] });
           b.setTimelineOptions({ repeat: -1 });
           animationRgb.push(b);
         }
@@ -177,11 +176,15 @@ export default function Monoton() {
     document.getElementById('disco-check').disabled = isRgb;
 
     if (isRgb) {
+      document.querySelectorAll('.letters path').forEach(e => {
+        e.style.stroke = 'red';
+        if (isGlowing) e.style.filter = `drop-shadow(0px 0px 3px red)`;
+      });
       setupAnimation();
     } else {
-      animationRgb.forEach(a => a.pause());
+      animationRgb.forEach(a => a.stop(0));
       animationRgb = [];
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise(resolve => setTimeout(resolve, 100));
       document.querySelectorAll('.letters path').forEach(e => {
         if (isRandomColor) {
           const color = generateColor();

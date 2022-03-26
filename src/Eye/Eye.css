@@ -37,6 +37,8 @@ circle {
   left: 0;
   top: 70px;
   padding-left: 20px;
+  height: calc(100vh - 70px);
+  overflow-x: hidden;
 }
 
 .inputs {
