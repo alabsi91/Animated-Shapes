@@ -6,10 +6,15 @@ import './Orbits.css';
 
 let orbitWidth = 0.4,
   orbitHeight = 1,
-  strokeWidth = 1,
-  color = '#ffffff',
   isRandomColor = false,
-  animations = [];
+  isRgb = false,
+  isDisco = false,
+  isGlowing = false,
+  glowStrength = 3,
+  delay = 150,
+  duration = 2000,
+  animations = [],
+  animationRgb = [];
 
 export default function Orbits() {
   const [count, setCount] = useState(3);
@@ -18,16 +23,24 @@ export default function Orbits() {
     const angle = 180 / count;
     const result = [];
     for (let i = 0; i < count; i++) {
+      const color = generateColor();
       result.push(
         <g className='orbit' key={Math.random() * 100}>
           <ellipse
-            cx='50'
-            cy='50'
-            rx={45 * orbitHeight}
-            ry={45 * orbitWidth}
+            cx='50%'
+            cy='50%'
+            rx={45 * (orbitHeight * 5)}
+            ry={45 * (orbitWidth * 5)}
             transform={`rotate(${i * angle})`}
-            stroke={isRandomColor ? generateColor() : color}
-            strokeWidth={strokeWidth / 20}
+            style={{
+              stroke: isRandomColor ? color : null,
+              filter:
+                isGlowing && isRandomColor
+                  ? `drop-shadow(0px 0px ${glowStrength}px ${color})`
+                  : isGlowing
+                  ? `drop-shadow(0px 0px ${glowStrength}px var(--color))`
+                  : null,
+            }}
           />
         </g>
       );
@@ -38,6 +51,8 @@ export default function Orbits() {
   const setupAnimation = () => {
     stop();
     animations = [];
+    animationRgb = [];
+
     const svg = document.querySelector('.container svg');
     const orbits = document.querySelectorAll('.orbit ellipse');
     const angle = 180 / count;
@@ -48,31 +63,66 @@ export default function Orbits() {
 
     for (let i = 0; i < orbits.length; i++) {
       const e = orbits[i];
+
       const callback = ([r], { pause }) => {
         if (!document.body.contains(e)) pause();
         e.style.transform = `rotate(${i * angle}deg) rotateX(${r}deg)`;
       };
-      animations.push(animare({ to: 180, duration: 2000, repeat: -1, autoPlay: false }, callback));
+
+      animations.push(animare({ to: 180, duration, delay: i * delay, repeat: -1, autoPlay: false }, callback));
+
+      if (isRgb) {
+        const callback_color = ([r, g, b], { pause }) => {
+          if (!document.contains(e)) pause();
+          e.style.stroke = `rgb(${r},${g},${b})`;
+          isGlowing
+            ? (e.style.filter = `drop-shadow(0px 0px ${glowStrength}px rgb(${r},${g},${b}))`)
+            : e.style.removeProperty('filter');
+        };
+        const b = animare(
+          { from: [255, 0, 0], to: [0, 0, 255], duration: 2000, delay: i * delay, autoPlay: false },
+          callback_color
+        )
+          .next({ to: [0, 255, 0] })
+          .next({ to: [255, 0, 0] });
+        b.setTimelineOptions({ repeat: -1 });
+        animationRgb.push(b);
+      }
     }
     play();
   };
 
-  const play = async () => {
+  const disco = async () => {
+    const ellipses = document.querySelectorAll('.orbit ellipse');
+    while (isDisco) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      if (!isDisco) return;
+      for (let i = 0; i < ellipses.length; i++) {
+        const ellipse = ellipses[i];
+        const color = generateColor();
+        ellipse.style.stroke = color;
+        if (isGlowing) ellipse.style.filter = `drop-shadow(0px 0px ${glowStrength}px ${color})`;
+      }
+    }
+  };
+
+  const play = () => {
     for (let i = 0; i < animations.length; i++) {
-      const a = animations[i];
-      const b = animations?.[i + 1];
-      a.play();
-      await a.asyncOnProgress((count * (180 / count)) / 2);
-      b?.play();
+      animations[i].play();
+      animationRgb?.[i]?.play();
     }
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.length; i++) animations[i].stop();
+    for (let i = 0; i < animations.length; i++) {
+      animations[i].stop();
+      animationRgb?.[i]?.stop();
+    }
   };
 
   useEffect(() => {
     setupAnimation();
+    if (isDisco) disco();
   }, [count]);
 
   useEffect(() => {
@@ -88,7 +138,7 @@ export default function Orbits() {
     orbitWidth = +e.target.value / 100;
     const orbits = document.querySelectorAll('.orbit ellipse');
     orbits.forEach(e => {
-      e.setAttribute('ry', 45 * orbitWidth);
+      e.setAttribute('ry', 45 * (orbitWidth * 5));
     });
   };
 
@@ -96,32 +146,117 @@ export default function Orbits() {
     orbitHeight = +e.target.value / 100;
     const orbits = document.querySelectorAll('.orbit ellipse');
     orbits.forEach(e => {
-      e.setAttribute('rx', 45 * orbitHeight);
+      e.setAttribute('rx', 45 * (orbitHeight * 5));
     });
   };
 
   const onStrokeWidthChange = e => {
-    strokeWidth = +e.target.value;
-    const orbits = document.querySelectorAll('.orbit ellipse');
-    orbits.forEach(e => {
-      e.setAttribute('stroke-width', strokeWidth / 20);
-    });
+    document.body.style.setProperty('--stroke', e.target.value);
+  };
+
+  const onDurationChange = e => {
+    duration = +e.target.value;
+    for (let i = 0; i < animations.length; i++) {
+      animations[i]?.setOptions({ duration });
+    }
+  };
+
+  const onDelayChange = e => {
+    delay = +e.target.value;
+    setupAnimation();
+  };
+
+  const onRGBChange = async e => {
+    isRgb = e.target.checked;
+    document.getElementById('random-check').disabled = isRgb;
+    document.getElementById('disco-check').disabled = isRgb;
+
+    if (isRgb) {
+      document.querySelectorAll('.orbit ellipse').forEach(e => {
+        e.style.stroke = 'red';
+        if (isGlowing) e.style.filter = `drop-shadow(0px 0px ${glowStrength}px red)`;
+      });
+      setupAnimation();
+    } else {
+      animationRgb.forEach(a => a.stop(0));
+      animationRgb = [];
+      await new Promise(resolve => setTimeout(resolve, 100));
+      document.querySelectorAll('.orbit ellipse').forEach(e => {
+        if (isRandomColor) {
+          const color = generateColor();
+          e.style.stroke = color;
+          if (isGlowing) e.style.filter = `drop-shadow(0px 0px ${glowStrength}px ${color})`;
+          return;
+        }
+        e.style.removeProperty('stroke');
+        if (isGlowing) e.style.filter = `drop-shadow(0px 0px ${glowStrength}px var(--color))`;
+      });
+    }
+  };
+
+  const onDiscoChange = e => {
+    isDisco = e.target.checked;
+    document.getElementById('random-check').disabled = isDisco;
+    document.getElementById('rgb-check').disabled = isDisco;
+
+    if (isDisco) {
+      if (isRgb) animationRgb.forEach(a => a.pause());
+      disco();
+    } else {
+      if (isRgb) setupAnimation();
+      document.querySelectorAll('.orbit ellipse').forEach(e => {
+        if (isRandomColor) {
+          const color = generateColor();
+          e.style.stroke = color;
+          if (isGlowing) e.style.filter = `drop-shadow(0px 0px ${glowStrength}px ${color})`;
+          return;
+        }
+        e.style.removeProperty('stroke');
+        isGlowing ? (e.style.filter = `drop-shadow(0px 0px ${glowStrength}px var(--color))`) : e.style.removeProperty('filter');
+      });
+    }
+  };
+
+  const onGlowChange = async e => {
+    isGlowing = e.target.checked;
+    if (isGlowing) {
+      if (isRgb) return;
+      if (isRandomColor) {
+        document.querySelectorAll('.orbit ellipse').forEach(e => {
+          const color = generateColor();
+          e.style.stroke = color;
+          e.style.filter = `drop-shadow(0px 0px ${glowStrength}px ${color})`;
+        });
+        return;
+      }
+
+      document.querySelectorAll('.orbit ellipse').forEach(e => {
+        e.style.filter = `drop-shadow(0px 0px ${glowStrength}px var(--color))`;
+      });
+    } else {
+      document.querySelectorAll('.orbit ellipse').forEach(e => {
+        e.style.removeProperty('filter');
+      });
+    }
   };
 
   const onRandomColorChange = e => {
-    const value = e.target.checked;
-    document.querySelectorAll('.orbit ellipse').forEach(e => e.setAttribute('stroke', value ? generateColor() : color));
-    isRandomColor = value;
-    e.target.checked = value;
+    isRandomColor = e.target.checked;
+    document.querySelectorAll('.orbit ellipse').forEach(e => {
+      if (isRandomColor) {
+        const color = generateColor();
+        e.style.stroke = color;
+        if (isGlowing) e.style.filter = `drop-shadow(0px 0px ${glowStrength}px ${color})`;
+        return;
+      }
+      e.style.removeProperty('stroke');
+      if (isGlowing) e.style.filter = `drop-shadow(0px 0px ${glowStrength}px var(--color))`;
+    });
   };
 
   const onColorChange = e => {
-    const value = e.target.value;
-    color = value;
-    if (isRandomColor) return;
-    document.querySelectorAll('.orbit ellipse').forEach(e => e.setAttribute('stroke', value));
+    document.body.style.setProperty('--color', e.target.value);
   };
-
 
   const onBgColorChange = e => {
     document.body.style.backgroundColor = e.target.value;
@@ -151,9 +286,9 @@ export default function Orbits() {
       </svg>
 
       <div className='container'>
-        <svg width='100%' height='100%' viewBox='0 0 100 100' fill='none'>
+        <svg width='100%' height='100%' viewBox='0 0 500 500' fill='none'>
           {createOrbit()}
-          <circle cx='50' cy='50' r='0.5' fill='white' />
+          <circle cx='50%' cy='50%' r='1' />
         </svg>
 
         <div className='controls'>
@@ -196,9 +331,55 @@ export default function Orbits() {
             type='number'
             min={1}
             name='orbit-stroke-width'
-            defaultValue={strokeWidth}
+            defaultValue='1'
             onChange={onStrokeWidthChange}
           />
+
+          <label className='labels' htmlFor='duration'>
+            Duration:
+          </label>
+          <input
+            className='inputs'
+            type='number'
+            step='50'
+            name='duration'
+            min='0'
+            defaultValue={duration}
+            onChange={onDurationChange}
+          />
+
+          <label className='labels' htmlFor='delay'>
+            Delay:
+          </label>
+          <input className='inputs' type='number' step='10' name='delay' min='0' defaultValue={delay} onChange={onDelayChange} />
+
+          <br />
+          <input className='inputs' id='rgb-check' type='checkbox' name='RGB-Mode' onChange={onRGBChange} />
+          <label className='labels' htmlFor='RGB-Mode'>
+            {' '}
+            RGB Mode
+          </label>
+
+          <br />
+          <input className='inputs' id='disco-check' type='checkbox' name='Disco-Mode' onChange={onDiscoChange} />
+          <label className='labels' htmlFor='Disco-Mode'>
+            {' '}
+            Disco Mode
+          </label>
+
+          <br />
+          <input className='inputs' id='glow-check' type='checkbox' name='Glow-Mode' onChange={onGlowChange} />
+          <label className='labels' htmlFor='Glow-Mode'>
+            {' '}
+            Glow
+          </label>
+
+          <br />
+          <input className='inputs' id='random-check' type='checkbox' name='randomColor' onChange={onRandomColorChange} />
+          <label className='labels' htmlFor='randomColor'>
+            {' '}
+            Random Colors
+          </label>
 
           <br />
           <label className='labels' htmlFor='color'>
@@ -206,12 +387,6 @@ export default function Orbits() {
           </label>
           <br />
           <input className='inputs' type='color' name='color' defaultValue='#ffffff' onChange={onColorChange} />
-
-          <input className='inputs' type='checkbox' name='randomColor' onChange={onRandomColorChange} />
-          <label className='labels' htmlFor='randomColor'>
-            {' '}
-            Random Colors
-          </label>
 
           <br />
           <label className='labels' htmlFor='bg-color'>
