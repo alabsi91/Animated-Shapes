@@ -1,4 +1,7 @@
 const fs = require('fs');
-const dir = 'node_modules\\react-scripts\\config\\webpack.config.js';
-const config = fs.readFileSync('webpack.config.js', 'utf8');
-fs.writeFileSync(dir, config, 'utf8');
+const dir = 'node_modules/react-scripts/config/webpack.config.js';
+
+fs.copyFile('webpack.config.js', dir, err => {
+  if (err) throw err;
+  console.log('webpack.config.js copied to node_modules/react-scripts/config/webpack.config.js');
+});
