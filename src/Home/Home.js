@@ -39,7 +39,7 @@ const Card = ({ path }) => {
 
   const getUrl = () => {
     try {
-      setPngUrl(require(`../assets/${path}.png`));
+      setPngUrl(require(`../assets/${path}.webp`));
       setGifUrl(require(`../assets/${path}.gif`));
     } catch (error) {}
   };
