@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
 import { useEffect, useRef, useState } from 'react';
-import './SwirlingLines.css';
+import styles from './SwirlingLines.lazy.css';
 
 let animations = [],
   animationsColor = [],
@@ -65,7 +65,7 @@ export default function SwirlingLines() {
     stop();
     animations = [];
     animationsColor = [];
-    
+
     const svgs = document.querySelectorAll('.lines-svg');
 
     for (let i = 0; i < svgs.length; i++) {
@@ -143,8 +143,15 @@ export default function SwirlingLines() {
   }, [svgCount, lineLength, contain, lineMultiplier]);
 
   useEffect(() => {
+    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
+
+    return () => {
+      styles.unuse();
+      window.removeEventListener('focus', play);
+      window.removeEventListener('blur', stop);
+    };
   }, []);
 
   const lineLengthInput = e => {

@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState } from 'react';
-import './Orbits.css';
+import styles from './Orbits.lazy.css';
 
 let orbitWidth = 0.4,
   orbitHeight = 1,
@@ -126,8 +126,15 @@ export default function Orbits() {
   }, [count]);
 
   useEffect(() => {
+    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
+
+    return () => {
+      styles.unuse();
+      window.removeEventListener('focus', play);
+      window.removeEventListener('blur', stop);
+    };
   }, []);
 
   const onCountChange = e => {

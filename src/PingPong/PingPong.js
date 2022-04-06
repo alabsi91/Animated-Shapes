@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare } from 'animare';
 import { useEffect, useRef, useState } from 'react';
-import './PingPong.css';
+import styles from './PingPong.lazy.css';
 
 export default function PingPong() {
   const [play, setAnimation] = useState();
@@ -121,10 +121,12 @@ export default function PingPong() {
   };
 
   useEffect(() => {
+    styles.use();
     ball();
     window.addEventListener('mousemove', movePaddle);
 
     return () => {
+      styles.unuse();
       window.removeEventListener('mousemove', movePaddle);
     };
   }, []);

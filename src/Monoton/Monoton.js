@@ -1,6 +1,6 @@
 /* eslint-disable no-loop-func */
 /* eslint-disable react-hooks/exhaustive-deps */
-import './Monoton.css';
+import styles from './Monoton.lazy.css';
 import { useState, useEffect, cloneElement } from 'react';
 import { animare, ease } from 'animare';
 import Letters from './Letters';
@@ -138,8 +138,15 @@ export default function Monoton() {
   }, [text]);
 
   useEffect(() => {
+    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
+
+    return () => {
+      styles.unuse();
+      window.removeEventListener('focus', play);
+      window.removeEventListener('blur', stop);
+    };
   }, []);
 
   const onTextChange = e => {

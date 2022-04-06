@@ -2,12 +2,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
 import { useState, useEffect } from 'react';
-import './Eye.css';
+import styles from './Eye.lazy.css';
 
 let animations = [],
   isRandomColor = false,
   rotateY = false,
-  duration= 5000,
+  duration = 5000,
   delay = 50;
 
 export default function Eye() {
@@ -83,8 +83,15 @@ export default function Eye() {
   }, [count]);
 
   useEffect(() => {
+    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
+
+    return () => {
+      styles.unuse();
+      window.removeEventListener('focus', play);
+      window.removeEventListener('blur', stop);
+    };
   }, []);
 
   const onCountChange = e => {
@@ -98,7 +105,7 @@ export default function Eye() {
   const onDurationChange = e => {
     duration = +e.target.value;
     stop();
-    animations.forEach(a => a.setOptions({ duration}));
+    animations.forEach(a => a.setOptions({ duration }));
     play();
   };
 
@@ -187,7 +194,7 @@ export default function Eye() {
           </label>
 
           <input className='inputs' type='number' step='50' min='0' name='Delay' defaultValue={delay} onChange={onDelayChange} />
-          
+
           <input className='inputs' type='checkbox' name='randomColor' onChange={onRotateChange} />
           <label className='labels' htmlFor='randomColor'>
             {' '}

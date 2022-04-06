@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
 import { useEffect, useState } from 'react';
-import './Clock.css';
+import styles from './Clock.lazy.css';
 
 let color = '#ffffff',
   isRandomColor = false,
@@ -92,8 +92,15 @@ export default function Clock() {
   }, [count, strokeWidth, strokeGap, strokeHeight]);
 
   useEffect(() => {
+    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
+
+    return () => {
+      styles.unuse();
+      window.removeEventListener('focus', play);
+      window.removeEventListener('blur', stop);
+    };
   }, []);
 
   const onCountChange = e => {

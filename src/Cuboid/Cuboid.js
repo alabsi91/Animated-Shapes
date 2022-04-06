@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import './Cuboid.css';
+import styles from './Cuboid.lazy.css';
 import { useEffect, useState } from 'react';
 import { animare, ease } from 'animare';
 
@@ -148,6 +148,7 @@ export default function Cuboid() {
   }, [count]);
 
   useEffect(() => {
+    styles.use();
     document.body.style.setProperty('--width', width + 'px');
     document.body.style.setProperty('--height', height + 'px');
     document.body.style.setProperty('--thickness', thickness + 'px');
@@ -156,6 +157,12 @@ export default function Cuboid() {
     document.body.style.setProperty('--border-color', borderColor);
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
+
+    return () => {
+      styles.unuse();
+      window.removeEventListener('focus', play);
+      window.removeEventListener('blur', stop);
+    };
   }, []);
 
   const onCountChange = e => {

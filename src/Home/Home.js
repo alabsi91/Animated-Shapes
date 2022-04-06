@@ -1,7 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
-import './Home.css';
+import { useState, useEffect, useRef, useContext } from 'react';
+import { Navigate } from '..';
+import styles from './Home.lazy.css';
 
 export default function Home() {
+  useEffect(() => {
+    styles.use();
+    return styles.unuse;
+  }, []);
+
   return (
     <div className='container'>
       <Card path='Trinity' />
@@ -24,10 +30,16 @@ const Card = ({ path }) => {
 
   const [pngUrl, setPngUrl] = useState('');
   const [gifUrl, setGifUrl] = useState('');
+  const setPage = useContext(Navigate);
 
-  const navigate = () => {
-    window.location.href = `/${path}`;
+  const navigate = e => {
+    setPage(path);
+    window.history.pushState({}, '', `/${path}`);
   };
+  // const navigate = (e) => {
+  //   e.preventDefault();
+  //   window.location.href = `/${path}`;
+  // };
 
   const getUrl = () => {
     try {

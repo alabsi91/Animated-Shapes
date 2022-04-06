@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
 import { useCallback, useEffect, useState } from 'react';
-import './Squares.css';
+import styles from './Squares.lazy.css';
 
 let animations = [],
   animationsColor = [],
@@ -122,8 +122,15 @@ export default function Squares() {
   }, [count, reverse]);
 
   useEffect(() => {
+    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
+    
+    return () => {
+      styles.unuse();
+      window.removeEventListener('focus', play);
+      window.removeEventListener('blur', stop);
+    };
   }, []);
 
   const togglePannel = () => {

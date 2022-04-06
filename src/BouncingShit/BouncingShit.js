@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useRef, useState } from 'react';
-import './BouncingShit.css';
+import styles from './BouncingShit.lazy.css';
 
 export default function BouncingShit() {
   /** @type {HTMLCanvasElement} */
@@ -201,9 +201,15 @@ export default function BouncingShit() {
   };
 
   useEffect(() => {
+    styles.use()
     fartSounds();
     document.body.addEventListener('mousemove', moveButt);
     window.addEventListener('resize', resizeCanvas);
+    return () => {
+      styles.unuse();
+      document.body.removeEventListener('mousemove', moveButt);
+      window.removeEventListener('resize', resizeCanvas);
+    }
   }, []);
 
   return (

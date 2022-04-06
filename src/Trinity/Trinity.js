@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
 import { useEffect, useState } from 'react';
-import './Trinity.css';
+import styles from './Trinity.lazy.css';
 
 let animations = [],
   animationsColor = [],
@@ -138,8 +138,15 @@ export default function Trinity() {
   }, [count]);
 
   useEffect(() => {
+    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
+
+    return () => {
+      styles.unuse();
+      window.removeEventListener('focus', play);
+      window.removeEventListener('blur', stop);
+    };
   }, []);
 
   const onCountChange = e => {

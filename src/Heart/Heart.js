@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare } from 'animare';
 import { useEffect } from 'react';
-import styles from './Heart.module.css';
+import styles from './Heart.lazy.css';
 
 export default function Heart() {
   const easingX = x => 16 * Math.sin(x * 6.2) ** 3;
@@ -59,12 +59,14 @@ export default function Heart() {
   };
 
   useEffect(() => {
+    styles.use();
     draw();
+    return styles.unuse;
   }, []);
 
   return (
-    <div className={styles.container}>
-      <canvas width={window.innerWidth} height={window.innerHeight} className={styles.canvas} />
+    <div className='container'>
+      <canvas width={window.innerWidth} height={window.innerHeight} className='canvas' />
     </div>
   );
 }

@@ -1,12 +1,14 @@
 import { animare } from 'animare';
 import React, { useEffect } from 'react';
-import './MasonryLayout.css';
+import styles from './MasonryLayout.lazy.css';
 
 function MasonryLayout() {
   useEffect(() => {
+    styles.use();
     // masonryLayout();
     // window.addEventListener('resize', masonryLayoutOnResize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    return styles.unuse;
   }, []);
 
   const masonryLayout = async () => {
