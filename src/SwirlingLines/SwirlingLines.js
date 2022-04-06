@@ -3,13 +3,12 @@ import { animare, ease } from 'animare';
 import { useEffect, useRef, useState } from 'react';
 import styles from './SwirlingLines.lazy.css';
 
-let animations = [],
-  animationsColor = [],
-  lineWidth = 1,
-  isRandomColor = false,
-  isRgb = false;
-
 export default function SwirlingLines() {
+  const animations = useRef([]);
+  const animationsRgb = useRef([]);
+  const lineWidth = useRef(1);
+  const isRandomColor = useRef(false);
+  const isRgb = useRef(false);
   const containeRef = useRef(true);
   const lineLengthRef = useRef(50);
 
@@ -31,8 +30,8 @@ export default function SwirlingLines() {
           y1='50%'
           x2='100%'
           y2='50%'
-          style={{ stroke: isRandomColor && !isRgb ? generateColor() : isRgb ? 'red' : null }}
-          strokeWidth={(100 / size) * lineWidth}
+          style={{ stroke: isRandomColor.current && !isRgb.current ? generateColor() : isRgb.current ? 'red' : null }}
+          strokeWidth={(100 / size) * lineWidth.current}
           transform={`rotate(${angle * i})`}
         />
       );
@@ -63,8 +62,8 @@ export default function SwirlingLines() {
 
   const setupAnimation = () => {
     stop();
-    animations = [];
-    animationsColor = [];
+    animations.current = [];
+    animationsRgb.current = [];
 
     const svgs = document.querySelectorAll('.lines-svg');
 
@@ -79,7 +78,7 @@ export default function SwirlingLines() {
         el.style.transform = `rotate(${rotate}deg)`;
       };
 
-      animations.push(
+      animations.current.push(
         animare(
           {
             to: angle * ((svgs.length * lineMultiplier - i * lineMultiplier) / 4),
@@ -92,7 +91,7 @@ export default function SwirlingLines() {
           callback
         )
       );
-      if (isRgb) {
+      if (isRgb.current) {
         const callback_color = ([r, g, b], { progress, setOptions, pause }) => {
           if (!document.contains(el)) pause();
           el.childNodes.forEach(child => {
@@ -106,24 +105,24 @@ export default function SwirlingLines() {
           .next({ to: [0, 255, 0] })
           .next({ to: [255, 0, 0] });
         b.setTimelineOptions({ repeat: -1 });
-        animationsColor.push(b);
+        animationsRgb.current.push(b);
       }
     }
     play();
   };
 
   const play = async () => {
-    for (let i = 0; i < animations.length; i++) {
-      animations[i].play();
-      animationsColor[i]?.setOptions({ delay: 150 * i });
-      animationsColor[i]?.play();
+    for (let i = 0; i < animations.current.length; i++) {
+      animations.current[i].play();
+      animationsRgb.current[i]?.setOptions({ delay: 150 * i });
+      animationsRgb.current[i]?.play();
     }
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.length; i++) {
-      animations[i].stop(0);
-      animationsColor[i]?.stop(0);
+    for (let i = 0; i < animations.current.length; i++) {
+      animations.current[i].stop(0);
+      animationsRgb.current[i]?.stop(0);
     }
   };
 
@@ -162,7 +161,7 @@ export default function SwirlingLines() {
   };
 
   const lineWidthInput = e => {
-    lineWidth = +e.target.value;
+    lineWidth.current = +e.target.value;
     const svgs = document.querySelectorAll('.lines-svg');
     for (let i = 0; i < svgs.length; i++) {
       const el = svgs[i];
@@ -190,20 +189,20 @@ export default function SwirlingLines() {
   };
 
   const onRGBChange = async e => {
-    isRgb = e.target.checked;
-    document.getElementById('random-check').disabled = isRgb;
+    isRgb.current = e.target.checked;
+    document.getElementById('random-check').disabled = isRgb.current;
 
-    if (isRgb) {
+    if (isRgb.current) {
       document.querySelectorAll('.lines-svg line').forEach(e => {
         e.style.stroke = 'red';
       });
       setupAnimation();
     } else {
-      animationsColor.forEach(a => a.pause());
-      animationsColor = [];
+      animationsRgb.current.forEach(a => a.pause());
+      animationsRgb.current = [];
       await new Promise(resolve => setTimeout(resolve, 50));
       document.querySelectorAll('.lines-svg line').forEach(e => {
-        e.style.stroke = isRandomColor ? generateColor() : null;
+        e.style.stroke = isRandomColor.current ? generateColor() : null;
       });
     }
   };
@@ -220,9 +219,9 @@ export default function SwirlingLines() {
   };
 
   const onRandomColorChange = e => {
-    isRandomColor = e.target.checked;
+    isRandomColor.current = e.target.checked;
     document.querySelectorAll('.lines-svg line').forEach(el => {
-      isRandomColor ? (el.style.stroke = generateColor()) : el.style.removeProperty('stroke');
+      isRandomColor.current ? (el.style.stroke = generateColor()) : el.style.removeProperty('stroke');
     });
   };
 
@@ -257,7 +256,14 @@ export default function SwirlingLines() {
         <label className='labels' htmlFor='line-widht'>
           Line Width:
         </label>
-        <input className='inputs' type='number' min={1} name='line-width' defaultValue={lineWidth} onChange={lineWidthInput} />
+        <input
+          className='inputs'
+          type='number'
+          min={1}
+          name='line-width'
+          defaultValue={lineWidth.current}
+          onChange={lineWidthInput}
+        />
 
         <label className='labels' htmlFor='line-multiplier'>
           Line Multiplier:

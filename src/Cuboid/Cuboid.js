@@ -1,22 +1,22 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import styles from './Cuboid.lazy.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { animare, ease } from 'animare';
-
-let width = 500,
-  height = 500,
-  thickness = 30,
-  strokeWidth = 2,
-  backgroundColor = '#000',
-  borderColor = '#fff',
-  randomColor = false,
-  strokeRandomColor = false,
-  duration = 3000,
-  delay = 50,
-  animations = [];
 
 export default function Cuboid() {
   const [count, setCount] = useState(15);
+
+  const width = useRef(500);
+  const height = useRef(500);
+  const thickness = useRef(30);
+  const strokeWidth = useRef(2);
+  const backgroundColor = useRef('#000');
+  const borderColor = useRef('#fff');
+  const randomColor = useRef(false);
+  const strokeRandomColor = useRef(false);
+  const duration = useRef(3000);
+  const delay = useRef(50);
+  const animations = useRef([]);
 
   const createCuboid = () => {
     let order = 0;
@@ -41,8 +41,8 @@ export default function Cuboid() {
             <div
               className='face ft'
               style={{
-                borderColor: strokeRandomColor ? color1 : null,
-                backgroundColor: randomColor ? color2 : null,
+                borderColor: strokeRandomColor.current ? color1 : null,
+                backgroundColor: randomColor.current ? color2 : null,
               }}
             >
               <div className='photon-shader'></div>
@@ -50,8 +50,8 @@ export default function Cuboid() {
             <div
               className='face bk'
               style={{
-                borderColor: strokeRandomColor ? color1 : null,
-                backgroundColor: randomColor ? color2 : null,
+                borderColor: strokeRandomColor.current ? color1 : null,
+                backgroundColor: randomColor.current ? color2 : null,
               }}
             >
               <div className='photon-shader'></div>
@@ -59,8 +59,8 @@ export default function Cuboid() {
             <div
               className='face rt'
               style={{
-                borderColor: strokeRandomColor ? color1 : null,
-                backgroundColor: randomColor ? color2 : null,
+                borderColor: strokeRandomColor.current ? color1 : null,
+                backgroundColor: randomColor.current ? color2 : null,
               }}
             >
               <div className='photon-shader'></div>
@@ -68,8 +68,8 @@ export default function Cuboid() {
             <div
               className='face lt'
               style={{
-                borderColor: strokeRandomColor ? color1 : null,
-                backgroundColor: randomColor ? color2 : null,
+                borderColor: strokeRandomColor.current ? color1 : null,
+                backgroundColor: randomColor.current ? color2 : null,
               }}
             >
               <div className='photon-shader'></div>
@@ -77,8 +77,8 @@ export default function Cuboid() {
             <div
               className='face bm'
               style={{
-                borderColor: strokeRandomColor ? color1 : null,
-                backgroundColor: randomColor ? color2 : null,
+                borderColor: strokeRandomColor.current ? color1 : null,
+                backgroundColor: randomColor.current ? color2 : null,
               }}
             >
               <div className='photon-shader'></div>
@@ -86,8 +86,8 @@ export default function Cuboid() {
             <div
               className='face tp'
               style={{
-                borderColor: strokeRandomColor ? color1 : null,
-                backgroundColor: randomColor ? color2 : null,
+                borderColor: strokeRandomColor.current ? color1 : null,
+                backgroundColor: randomColor.current ? color2 : null,
               }}
             >
               <div className='photon-shader'></div>
@@ -103,7 +103,7 @@ export default function Cuboid() {
 
   const setupAnimation = () => {
     stop();
-    animations = [];
+    animations.current = [];
 
     const scenes = document.querySelectorAll('.scene');
 
@@ -115,32 +115,32 @@ export default function Cuboid() {
         if (!document.contains(e)) pause();
         e.style.transform = `rotateX(180deg) rotateY(${ry}deg)`;
         if (progress === 100) {
-          setOptions({ delay: (scenes.length - 1 - order) * delay + order * delay });
+          setOptions({ delay: (scenes.length - 1 - order) * delay.current + order * delay.current });
         }
       };
 
       const a = animare(
-        { from: 0, to: 180, duration, delay: order * delay, autoPlay: false, ease: ease.out.back },
+        { from: 0, to: 180, duration: duration.current, delay: order * delay.current, autoPlay: false, ease: ease.out.back },
         callback
       ).next({
         to: 0,
-        delay: (scenes.length - 1 - order) * delay + order * delay,
+        delay: (scenes.length - 1 - order) * delay.current + order * delay.current,
       });
       a.setTimelineOptions({ repeat: -1 });
-      animations[order] = a;
+      animations.current[order] = a;
     }
     play();
   };
 
   const play = () => {
-    for (let i = 0; i < animations.length; i++) {
-      animations[i].setOptions({ delay: i * delay });
-      animations[i].play();
+    for (let i = 0; i < animations.current.length; i++) {
+      animations.current[i].setOptions({ delay: i * delay.current });
+      animations.current[i].play();
     }
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.length; i++) animations[i].stop();
+    for (let i = 0; i < animations.current.length; i++) animations.current[i].stop();
   };
 
   useEffect(() => {
@@ -149,12 +149,12 @@ export default function Cuboid() {
 
   useEffect(() => {
     styles.use();
-    document.body.style.setProperty('--width', width + 'px');
-    document.body.style.setProperty('--height', height + 'px');
-    document.body.style.setProperty('--thickness', thickness + 'px');
-    document.body.style.setProperty('--border-width', strokeWidth + 'px');
-    document.body.style.setProperty('--bg-color', backgroundColor);
-    document.body.style.setProperty('--border-color', borderColor);
+    document.body.style.setProperty('--width', width.current + 'px');
+    document.body.style.setProperty('--height', height.current + 'px');
+    document.body.style.setProperty('--thickness', thickness.current + 'px');
+    document.body.style.setProperty('--border-width', strokeWidth.current + 'px');
+    document.body.style.setProperty('--bg-color', backgroundColor.current);
+    document.body.style.setProperty('--border-color', borderColor.current);
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
 
@@ -170,41 +170,41 @@ export default function Cuboid() {
   };
 
   const onWidthChange = e => {
-    width = +e.target.value;
-    document.body.style.setProperty('--width', width + 'px');
+    width.current = +e.target.value;
+    document.body.style.setProperty('--width', width.current + 'px');
   };
 
   const onHeightChange = e => {
-    height = +e.target.value;
-    document.body.style.setProperty('--height', height + 'px');
+    height.current = +e.target.value;
+    document.body.style.setProperty('--height', height.current + 'px');
   };
 
   const onThicknessChange = e => {
-    thickness = +e.target.value;
-    document.body.style.setProperty('--thickness', thickness + 'px');
+    thickness.current = +e.target.value;
+    document.body.style.setProperty('--thickness', thickness.current + 'px');
   };
 
   const onStrokeChange = e => {
-    strokeWidth = +e.target.value;
-    document.body.style.setProperty('--border-width', strokeWidth + 'px');
+    strokeWidth.current = +e.target.value;
+    document.body.style.setProperty('--border-width', strokeWidth.current + 'px');
   };
 
   const onPerspectiveChange = e => {
-    strokeWidth = +e.target.value;
-    document.getElementById('tridiv').style.perspective = strokeWidth + 'px';
+    strokeWidth.current = +e.target.value;
+    document.getElementById('tridiv').style.perspective = strokeWidth.current + 'px';
   };
 
   const onDelayChange = e => {
-    delay = +e.target.value;
+    delay.current = +e.target.value;
     stop();
-    animations = [];
+    animations.current = [];
     setupAnimation();
   };
 
   const onDurationChange = e => {
-    duration = +e.target.value;
+    duration.current = +e.target.value;
     stop();
-    animations = [];
+    animations.current = [];
     setupAnimation();
   };
 
@@ -213,12 +213,12 @@ export default function Cuboid() {
   };
 
   const onRandomColorChange = e => {
-    randomColor = e.target.checked;
+    randomColor.current = e.target.checked;
     document.querySelectorAll('.cub-1').forEach(e => {
       const faces = [...e.children];
       const color = generateColor();
       faces.forEach(f => {
-        if (randomColor) {
+        if (randomColor.current) {
           f.style.backgroundColor = color;
         } else f.style.removeProperty('background-color');
       });
@@ -230,13 +230,13 @@ export default function Cuboid() {
   };
 
   const onStrokeRandomColorChange = e => {
-    strokeRandomColor = e.target.checked;
+    strokeRandomColor.current = e.target.checked;
 
     document.querySelectorAll('.cub-1').forEach(e => {
       const faces = [...e.children];
       const color = generateColor();
       faces.forEach(f => {
-        if (strokeRandomColor) {
+        if (strokeRandomColor.current) {
           f.style.borderColor = color;
         } else f.style.removeProperty('border');
       });
@@ -287,7 +287,7 @@ export default function Cuboid() {
           step='10'
           min={1}
           name='cuboids-width'
-          defaultValue={width}
+          defaultValue={width.current}
           onChange={onWidthChange}
         />
 
@@ -300,7 +300,7 @@ export default function Cuboid() {
           step='10'
           min={1}
           name='cuboids-width'
-          defaultValue={height}
+          defaultValue={height.current}
           onChange={onHeightChange}
         />
 
@@ -312,7 +312,7 @@ export default function Cuboid() {
           type='number'
           min={1}
           name='cuboids-thickness'
-          defaultValue={thickness}
+          defaultValue={thickness.current}
           onChange={onThicknessChange}
         />
 
@@ -324,7 +324,7 @@ export default function Cuboid() {
           type='number'
           name='stroke-width'
           min='0'
-          defaultValue={strokeWidth}
+          defaultValue={strokeWidth.current}
           onChange={onStrokeChange}
         />
 
@@ -344,7 +344,7 @@ export default function Cuboid() {
         <label className='labels' htmlFor='delay'>
           Delay:
         </label>
-        <input className='inputs' type='number' name='delay' min='0' defaultValue={delay} onChange={onDelayChange} />
+        <input className='inputs' type='number' name='delay' min='0' defaultValue={delay.current} onChange={onDelayChange} />
 
         <label className='labels' htmlFor='duration'>
           Duration:
@@ -355,7 +355,7 @@ export default function Cuboid() {
           name='duration'
           min='1'
           step={100}
-          defaultValue={duration}
+          defaultValue={duration.current}
           onChange={onDurationChange}
         />
 

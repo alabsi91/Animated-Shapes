@@ -1,17 +1,17 @@
 /* eslint-disable no-loop-func */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './Eye.lazy.css';
-
-let animations = [],
-  isRandomColor = false,
-  rotateY = false,
-  duration = 5000,
-  delay = 50;
 
 export default function Eye() {
   const [count, setCount] = useState(20);
+
+  const animations = useRef([]);
+  const isRandomColor = useRef(false);
+  const rotateY = useRef(false);
+  const duration = useRef(5000);
+  const delay = useRef(50);
 
   const createCircles = () => {
     const result = [];
@@ -22,7 +22,7 @@ export default function Eye() {
           cx='250'
           cy='250'
           r={(i + 1) * (240 / count)}
-          style={isRandomColor ? { stroke: generateColor() } : null}
+          style={isRandomColor.current ? { stroke: generateColor() } : null}
         />
       );
     }
@@ -31,7 +31,7 @@ export default function Eye() {
 
   const setupAnimation = () => {
     stop();
-    animations = [];
+    animations.current = [];
 
     const circles = document.querySelectorAll('circle');
 
@@ -41,15 +41,15 @@ export default function Eye() {
       const callback = ([r, rotate], { pause }) => {
         if (!document.contains(e)) pause();
         e.setAttribute('r', r);
-        e.style.transform = rotateY ? `rotateY(${rotate}deg)` : `rotateX(${rotate}deg)`;
+        e.style.transform = rotateY.current ? `rotateY(${rotate}deg)` : `rotateX(${rotate}deg)`;
       };
 
-      animations.push(
+      animations.current.push(
         animare(
           {
             from: [+e.getAttribute('r'), 0],
             to: [+e.getAttribute('r') * 0.7, 180],
-            duration,
+            duration: duration.current,
             direction: 'alternate',
             ease: ease.inOut.quad,
             autoPlay: false,
@@ -65,17 +65,17 @@ export default function Eye() {
   };
 
   const play = async () => {
-    for (let i = 0; i < animations.length; i++) {
-      const a = animations[i];
-      const b = animations?.[i + 1];
+    for (let i = 0; i < animations.current.length; i++) {
+      const a = animations.current[i];
+      const b = animations.current?.[i + 1];
       a.play();
-      await a.asyncOnProgress(delay);
+      await a.asyncOnProgress(delay.current);
       b?.play();
     }
   };
 
   const stop = () => {
-    animations.forEach(a => a.stop(0));
+    animations.current.forEach(a => a.stop(0));
   };
 
   useEffect(() => {
@@ -103,20 +103,20 @@ export default function Eye() {
   };
 
   const onDurationChange = e => {
-    duration = +e.target.value;
+    duration.current = +e.target.value;
     stop();
-    animations.forEach(a => a.setOptions({ duration }));
+    animations.current.forEach(a => a.setOptions({ duration: duration.current }));
     play();
   };
 
   const onDelayChange = e => {
     stop();
-    delay = +e.target.value;
+    delay.current = +e.target.value;
     play();
   };
 
   const onRotateChange = e => {
-    rotateY = e.target.checked;
+    rotateY.current = e.target.checked;
     setupAnimation();
   };
 
@@ -125,9 +125,9 @@ export default function Eye() {
   };
 
   const onRandomColorChange = e => {
-    isRandomColor = e.target.checked;
+    isRandomColor.current = e.target.checked;
     document.querySelectorAll('circle').forEach(e => {
-      if (isRandomColor) {
+      if (isRandomColor.current) {
         e.style.stroke = generateColor();
       } else e.style.removeProperty('stroke');
     });
@@ -185,7 +185,7 @@ export default function Eye() {
             step={50}
             min='0'
             name='duration'
-            defaultValue={duration}
+            defaultValue={duration.current}
             onChange={onDurationChange}
           />
 
@@ -193,7 +193,15 @@ export default function Eye() {
             Delay:
           </label>
 
-          <input className='inputs' type='number' step='50' min='0' name='Delay' defaultValue={delay} onChange={onDelayChange} />
+          <input
+            className='inputs'
+            type='number'
+            step='50'
+            min='0'
+            name='Delay'
+            defaultValue={delay.current}
+            onChange={onDelayChange}
+          />
 
           <input className='inputs' type='checkbox' name='randomColor' onChange={onRotateChange} />
           <label className='labels' htmlFor='randomColor'>

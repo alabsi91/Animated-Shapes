@@ -1,26 +1,26 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import styles from './Squares.lazy.css';
-
-let animations = [],
-  animationsColor = [],
-  isRandomColor = false,
-  isRgb = false,
-  gap = 0;
 
 export default function Squares() {
   const [count, setCount] = useState(20);
   const [reverse, setReverse] = useState(false);
 
+  const animations = useRef([]);
+  const animationsRgb = useRef([]);
+  const isRandomColor = useRef(false);
+  const isRgb = useRef(false);
+  const gap = useRef(0);
+
   const createSquares = useCallback(() => {
-    gap = (window.innerHeight - 200) / count;
+    gap.current = (window.innerHeight - 200) / count;
     const result = [];
     for (let i = 0; i < count; i++) {
       const css = {
-        borderColor: isRandomColor ? generateColor() : null,
-        width: window.innerWidth / 2 - gap * i + 'px',
-        height: 200 + gap * i + 'px',
+        borderColor: isRandomColor.current ? generateColor() : null,
+        width: window.innerWidth / 2 - gap.current * i + 'px',
+        height: 200 + gap.current * i + 'px',
       };
       result.push(<div className='square' style={css} key={Math.random() * 100} />);
     }
@@ -28,7 +28,7 @@ export default function Squares() {
   }, [count]);
 
   const setupRgbAnimation = () => {
-    animationsColor = [];
+    animationsRgb.current = [];
     const squares = document.querySelectorAll('.square');
 
     for (let i = 0; i < squares.length; i++) {
@@ -47,14 +47,14 @@ export default function Squares() {
         .next({ to: [0, 255, 0] })
         .next({ to: [255, 255, 255] });
       b.setTimelineOptions({ repeat: -1 });
-      animationsColor.push(b);
+      animationsRgb.current.push(b);
     }
   };
 
   const setupAnimation = () => {
     stop();
-    animations = [];
-    animationsColor = [];
+    animations.current = [];
+    animationsRgb.current = [];
 
     const squares = document.querySelectorAll('.square');
     let i = reverse ? 0 : squares.length - 1;
@@ -76,44 +76,44 @@ export default function Squares() {
       const a = animare(
         {
           from: [width, height],
-          to: [winWidth / 2 + gap * (i + 1), 100 + gap * i],
+          to: [winWidth / 2 + gap.current * (i + 1), 100 + gap.current * i],
           duration,
           autoPlay: false,
           ease: ease.inOut.quad,
         },
         callback
       )
-        .next({ to: [winWidth / 4 + gap * i, winHeight / 1.2 - gap * i] })
-        .next({ to: [winWidth - 100 - gap * i, 200 + gap * i] })
-        .next({ to: [winWidth - 100 - gap * i, winHeight - 100 - gap * i] })
-        .next({ to: [winWidth / 2 - gap * i, 200 + gap * i] })
-        .next({ to: [winWidth - 100 - gap * i, winHeight - 100 - gap * i] })
+        .next({ to: [winWidth / 4 + gap.current * i, winHeight / 1.2 - gap.current * i] })
+        .next({ to: [winWidth - 100 - gap.current * i, 200 + gap.current * i] })
+        .next({ to: [winWidth - 100 - gap.current * i, winHeight - 100 - gap.current * i] })
+        .next({ to: [winWidth / 2 - gap.current * i, 200 + gap.current * i] })
+        .next({ to: [winWidth - 100 - gap.current * i, winHeight - 100 - gap.current * i] })
         // .next({ to: [gap * (i + 1), gap * (i + 1)] })
-        .next({ to: [winWidth / 2 - gap * i, 200 + gap * i] });
+        .next({ to: [winWidth / 2 - gap.current * i, 200 + gap.current * i] });
 
       a.setTimelineOptions({ repeat: -1 });
-      animations.push(a);
+      animations.current.push(a);
 
-      if (isRgb) setupRgbAnimation();
+      if (isRgb.current) setupRgbAnimation();
     }
     play();
   };
 
   const play = async () => {
-    animationsColor.forEach(a => a.play());
-    for (let i = 0; i < animations.length; i++) {
-      const a = animations[i];
-      const b = animations?.[i + 1];
+    animationsRgb.current.forEach(a => a.play());
+    for (let i = 0; i < animations.current.length; i++) {
+      const a = animations.current[i];
+      const b = animations.current?.[i + 1];
       a.play();
-      await a.asyncOnProgress(gap * 2);
+      await a.asyncOnProgress(gap.current * 2);
       b?.play();
     }
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.length; i++) {
-      animations[i].stop(0);
-      animationsColor?.[i]?.stop(0);
+    for (let i = 0; i < animations.current.length; i++) {
+      animations.current[i].stop(0);
+      animationsRgb.current?.[i]?.stop(0);
     }
   };
 
@@ -125,7 +125,7 @@ export default function Squares() {
     styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
-    
+
     return () => {
       styles.unuse();
       window.removeEventListener('focus', play);
@@ -156,28 +156,28 @@ export default function Squares() {
   };
 
   const onRGBChange = async e => {
-    isRgb = e.target.checked;
-    document.getElementById('random-check').disabled = isRgb;
+    isRgb.current = e.target.checked;
+    document.getElementById('random-check').disabled = isRgb.current;
 
-    if (isRgb) {
+    if (isRgb.current) {
       setupRgbAnimation();
-      animationsColor.forEach(a => {
+      animationsRgb.current.forEach(a => {
         a.play();
       });
     } else {
-      animationsColor.forEach(a => a.pause());
-      animationsColor = [];
+      animationsRgb.current.forEach(a => a.pause());
+      animationsRgb.current = [];
       await new Promise(resolve => setTimeout(resolve, 50));
       document.querySelectorAll('.square').forEach(e => {
-        isRandomColor ? (e.style.borderColor = generateColor()) : e.style.removeProperty('border-color');
+        isRandomColor.current ? (e.style.borderColor = generateColor()) : e.style.removeProperty('border-color');
       });
     }
   };
 
   const onRandomColorChange = e => {
-    isRandomColor = e.target.checked;
+    isRandomColor.current = e.target.checked;
     document.querySelectorAll('.square').forEach(e => {
-      isRandomColor ? (e.style.borderColor = generateColor()) : e.style.removeProperty('border-color');
+      isRandomColor.current ? (e.style.borderColor = generateColor()) : e.style.removeProperty('border-color');
     });
   };
 

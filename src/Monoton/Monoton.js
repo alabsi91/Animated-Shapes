@@ -1,21 +1,21 @@
 /* eslint-disable no-loop-func */
 /* eslint-disable react-hooks/exhaustive-deps */
 import styles from './Monoton.lazy.css';
-import { useState, useEffect, cloneElement } from 'react';
+import { useState, useEffect, cloneElement, useRef } from 'react';
 import { animare, ease } from 'animare';
 import Letters from './Letters';
 
-let animations = [],
-  animationRgb = [],
-  duration = 2000,
-  delay = 150,
-  isRandomColor = false,
-  isRgb = false,
-  isDisco = false,
-  isGlowing = false;
-
 export default function Monoton() {
   const [text, setText] = useState('TEXT');
+
+  const animations = useRef([]);
+  const animationRgb = useRef([]);
+  const duration = useRef(2000);
+  const delay = useRef(150);
+  const isRandomColor = useRef(false);
+  const isRgb = useRef(false);
+  const isDisco = useRef(false);
+  const isGlowing = useRef(false);
 
   const createLetters = () => {
     const result = [];
@@ -34,8 +34,10 @@ export default function Monoton() {
               cloneElement(c, {
                 key: Math.random() * 100,
                 style: {
-                  stroke: isRandomColor ? generateColor() : null,
-                  filter: isGlowing ? `drop-shadow(0px 0px 3px ${isRandomColor ? generateColor() : 'var(--color)'})` : null,
+                  stroke: isRandomColor.current ? generateColor() : null,
+                  filter: isGlowing.current
+                    ? `drop-shadow(0px 0px 3px ${isRandomColor.current ? generateColor() : 'var(--color)'})`
+                    : null,
                 },
               })
             )
@@ -47,8 +49,8 @@ export default function Monoton() {
 
   const setupAnimation = () => {
     stop();
-    animations = [];
-    animationRgb = [];
+    animations.current = [];
+    animationRgb.current = [];
 
     const letters = document.querySelectorAll('.letters');
 
@@ -71,7 +73,9 @@ export default function Monoton() {
         const callback_color = ([r, g, b], { progress, setOptions, pause }) => {
           if (!document.contains(path)) pause();
           path.style.stroke = `rgb(${r},${g},${b})`;
-          isGlowing ? (path.style.filter = `drop-shadow(0px 0px 3px rgb(${r},${g},${b}))`) : path.style.removeProperty('filter');
+          isGlowing.current
+            ? (path.style.filter = `drop-shadow(0px 0px 3px rgb(${r},${g},${b}))`)
+            : path.style.removeProperty('filter');
 
           if (progress === 100) {
             setOptions({ delay: (pathes.length - 1 - i) * 200 + i * 200 });
@@ -79,24 +83,31 @@ export default function Monoton() {
         };
 
         const a = animare(
-          { from: [length, length / 2], to: [0, length], duration, delay: p * delay, autoPlay: false, ease: ease.inOut.quad },
+          {
+            from: [length, length / 2],
+            to: [0, length],
+            duration: duration.current,
+            delay: p * delay.current,
+            autoPlay: false,
+            ease: ease.inOut.quad,
+          },
           callback
         )
           .next({ to: [-length, length / 2] })
           .next({ to: [0, length] })
           .next({ to: [length, length / 2] });
         a.setTimelineOptions({ repeat: -1 });
-        animations.push(a);
+        animations.current.push(a);
 
-        if (isRgb) {
+        if (isRgb.current) {
           const b = animare(
-            { from: [255, 0, 0], to: [0, 0, 255], duration: 2000, delay: p * delay + i * 50, autoPlay: false },
+            { from: [255, 0, 0], to: [0, 0, 255], duration: 2000, delay: p * delay.current + i * 50, autoPlay: false },
             callback_color
           )
             .next({ to: [0, 255, 0] })
             .next({ to: [255, 0, 0] });
           b.setTimelineOptions({ repeat: -1 });
-          animationRgb.push(b);
+          animationRgb.current.push(b);
         }
       }
     }
@@ -105,36 +116,36 @@ export default function Monoton() {
 
   const disco = async () => {
     const pathes = document.querySelectorAll('.letters path');
-    while (isDisco) {
+    while (isDisco.current) {
       await new Promise(resolve => setTimeout(resolve, 500));
-      if (!isDisco) return;
+      if (!isDisco.current) return;
       for (let i = 0; i < pathes.length; i++) {
         const path = pathes[i];
         const color = generateColor();
         path.style.stroke = color;
-        if (isGlowing) path.style.filter = `drop-shadow(0px 0px 3px ${color})`;
+        if (isGlowing.current) path.style.filter = `drop-shadow(0px 0px 3px ${color})`;
       }
     }
   };
 
   const play = () => {
-    for (let i = 0; i < animations.length; i++) {
-      animationRgb[i]?.setOptions({ delay: i * delay });
-      animationRgb[i]?.play();
-      animations[i].play();
+    for (let i = 0; i < animations.current.length; i++) {
+      animationRgb.current[i]?.setOptions({ delay: i * delay.current });
+      animationRgb.current[i]?.play();
+      animations.current[i].play();
     }
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.length; i++) {
-      animations[i].stop('25%');
-      animationRgb[i]?.stop('25%');
+    for (let i = 0; i < animations.current.length; i++) {
+      animations.current[i].stop('25%');
+      animationRgb.current[i]?.stop('25%');
     }
   };
 
   useEffect(() => {
     setupAnimation();
-    if (isDisco) disco();
+    if (isDisco.current) disco();
   }, [text]);
 
   useEffect(() => {
@@ -166,73 +177,73 @@ export default function Monoton() {
   };
 
   const onDurationChange = e => {
-    duration = +e.target.value;
-    for (let i = 0; i < animations.length; i++) {
-      animations[i]?.setOptions({ duration });
+    duration.current = +e.target.value;
+    for (let i = 0; i < animations.current.length; i++) {
+      animations.current[i]?.setOptions({ duration: duration.current });
     }
   };
 
   const onDelayChange = e => {
-    delay = +e.target.value;
+    delay.current = +e.target.value;
     setupAnimation();
   };
 
   const onRGBChange = async e => {
-    isRgb = e.target.checked;
-    document.getElementById('random-check').disabled = isRgb;
-    document.getElementById('disco-check').disabled = isRgb;
+    isRgb.current = e.target.checked;
+    document.getElementById('random-check').disabled = isRgb.current;
+    document.getElementById('disco-check').disabled = isRgb.current;
 
-    if (isRgb) {
+    if (isRgb.current) {
       document.querySelectorAll('.letters path').forEach(e => {
         e.style.stroke = 'red';
-        if (isGlowing) e.style.filter = `drop-shadow(0px 0px 3px red)`;
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px 3px red)`;
       });
       setupAnimation();
     } else {
-      animationRgb.forEach(a => a.stop(0));
-      animationRgb = [];
+      animationRgb.current.forEach(a => a.stop(0));
+      animationRgb.current = [];
       await new Promise(resolve => setTimeout(resolve, 100));
       document.querySelectorAll('.letters path').forEach(e => {
-        if (isRandomColor) {
+        if (isRandomColor.current) {
           const color = generateColor();
           e.style.stroke = color;
-          if (isGlowing) e.style.filter = `drop-shadow(0px 0px 3px ${color})`;
+          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px 3px ${color})`;
           return;
         }
         e.style.removeProperty('stroke');
-        if (isGlowing) e.style.filter = `drop-shadow(0px 0px 3px var(--color))`;
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px 3px var(--color))`;
       });
     }
   };
 
   const onDiscoChange = e => {
-    isDisco = e.target.checked;
-    document.getElementById('random-check').disabled = isDisco;
-    document.getElementById('rgb-check').disabled = isDisco;
+    isDisco.current = e.target.checked;
+    document.getElementById('random-check').disabled = isDisco.current;
+    document.getElementById('rgb-check').disabled = isDisco.current;
 
-    if (isDisco) {
-      if (isRgb) animationRgb.forEach(a => a.pause());
+    if (isDisco.current) {
+      if (isRgb.current) animationRgb.current.forEach(a => a.pause());
       disco();
     } else {
-      if (isRgb) setupAnimation();
+      if (isRgb.current) setupAnimation();
       document.querySelectorAll('.letters path').forEach(e => {
-        if (isRandomColor) {
+        if (isRandomColor.current) {
           const color = generateColor();
           e.style.stroke = color;
-          if (isGlowing) e.style.filter = `drop-shadow(0px 0px 3px ${color})`;
+          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px 3px ${color})`;
           return;
         }
         e.style.removeProperty('stroke');
-        isGlowing ? (e.style.filter = `drop-shadow(0px 0px 3px var(--color))`) : e.style.removeProperty('filter');
+        isGlowing.current ? (e.style.filter = `drop-shadow(0px 0px 3px var(--color))`) : e.style.removeProperty('filter');
       });
     }
   };
 
   const onGlowChange = async e => {
-    isGlowing = e.target.checked;
-    if (isGlowing) {
-      if (isRgb) return;
-      if (isRandomColor) {
+    isGlowing.current = e.target.checked;
+    if (isGlowing.current) {
+      if (isRgb.current) return;
+      if (isRandomColor.current) {
         document.querySelectorAll('.letters path').forEach(e => {
           const color = generateColor();
           e.style.stroke = color;
@@ -252,16 +263,16 @@ export default function Monoton() {
   };
 
   const onRandomColorChange = e => {
-    isRandomColor = e.target.checked;
+    isRandomColor.current = e.target.checked;
     document.querySelectorAll('.letters path').forEach(e => {
-      if (isRandomColor) {
+      if (isRandomColor.current) {
         const color = generateColor();
         e.style.stroke = color;
-        if (isGlowing) e.style.filter = `drop-shadow(0px 0px 3px ${color})`;
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px 3px ${color})`;
         return;
       }
       e.style.removeProperty('stroke');
-      if (isGlowing) e.style.filter = `drop-shadow(0px 0px 3px var(--color))`;
+      if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px 3px var(--color))`;
     });
   };
 
@@ -328,14 +339,22 @@ export default function Monoton() {
           step='50'
           name='duration'
           min='0'
-          defaultValue={duration}
+          defaultValue={duration.current}
           onChange={onDurationChange}
         />
 
         <label className='labels' htmlFor='delay'>
           Delay:
         </label>
-        <input className='inputs' type='number' step='10' name='delay' min='0' defaultValue={delay} onChange={onDelayChange} />
+        <input
+          className='inputs'
+          type='number'
+          step='10'
+          name='delay'
+          min='0'
+          defaultValue={delay.current}
+          onChange={onDelayChange}
+        />
 
         <br />
         <input className='inputs' id='rgb-check' type='checkbox' name='RGB-Mode' onChange={onRGBChange} />

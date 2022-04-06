@@ -1,23 +1,46 @@
 /* eslint-disable no-unused-vars */
-import { useState, useEffect } from 'react';
-import { animare, ease } from 'animare';
-import React from 'react';
-import ReactDOM from 'react-dom';
 import styles from './index.lazy.css';
+import './global.css';
+import { useState, useEffect, Suspense, lazy, createContext, StrictMode } from 'react';
+import ReactDOM from 'react-dom';
+import { animare, ease } from 'animare';
 
-export const Navigate = React.createContext();
+const Loading = () => {
+  const animation = () => {
+    const outter = document.querySelector('.outter');
+    const inner = document.querySelector('.inner');
+    animare({ to: 30, duration: 1000, repeat: -1, ease: ease.inOut.quad }, ([r]) => {
+      outter.style.width = `${r}vw`;
+    });
+    animare({ to: 30, duration: 1000, delay: 20, repeat: -1, ease: ease.inOut.quad }, ([r]) => {
+      inner.style.width = `${r}vw`;
+    });
+  };
+
+  useEffect(() => {
+    styles.use();
+    animation();
+    return styles.unuse;
+  }, []);
+
+  return (
+    <div className='background'>
+      <div className='circle outter'>
+        <div className='circle inner' />
+      </div>
+    </div>
+  );
+};
+
+export const Navigate = createContext();
 
 const App = () => {
   const [page, setPage] = useState(window.location.pathname.replace('/', '') || 'Home');
 
-  const render = () => {
+  const Render = () => {
     const path = page;
-    const Component = React.lazy(() => import(`./${path}/${path}`));
-    return (
-      <React.Suspense fallback={<Loading />}>
-        <Component />
-      </React.Suspense>
-    );
+    const Component = lazy(() => import(`./${path}/${path}`));
+    return <Component />;
   };
 
   useEffect(() => {
@@ -27,39 +50,18 @@ const App = () => {
     });
   }, []);
 
-  return <Navigate.Provider value={setPage}>{render()} </Navigate.Provider>;
-};
-
-const Loading = () => {
-  const animation = () => {
-    const outter = document.querySelector(`.${styles.outter}`);
-    const inner = document.querySelector(`.${styles.inner}`);
-    animare({ to: 30, duration: 1000, repeat: -1, ease: ease.inOut.quad }, ([r]) => {
-      outter.style.width = `${r}vw`;
-    });
-    animare({ to: 30, duration: 1000, delay: 20, repeat: -1, ease: ease.inOut.quad }, ([r]) => {
-      inner.style.width = `${r}vw`;
-    });
-  };
-
-  React.useEffect(() => {
-    animation();
-  }, []);
-
   return (
-    <div className={styles.background}>
-      <div className={styles.circle + ' ' + styles.outter}>
-        <div className={styles.circle + ' ' + styles.inner} />
-      </div>
-    </div>
+    <Navigate.Provider value={setPage}>
+      <Suspense fallback={<Loading />}>
+        <Render />
+      </Suspense>
+    </Navigate.Provider>
   );
 };
 
 ReactDOM.render(
-  <React.StrictMode>
-    <React.Suspense fallback={<Loading />}>
-      <App />
-    </React.Suspense>
-  </React.StrictMode>,
+  <StrictMode>
+    <App />
+  </StrictMode>,
   document.getElementById('root')
 );

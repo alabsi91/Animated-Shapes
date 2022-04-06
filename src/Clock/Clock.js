@@ -1,18 +1,18 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import styles from './Clock.lazy.css';
-
-let color = '#ffffff',
-  isRandomColor = false,
-  duration = 10000,
-  animations = [];
 
 export default function Clock() {
   const [count, setCount] = useState(20);
   const [strokeWidth, setStrokeWidth] = useState(10);
   const [strokeHeight, setStrokeHeight] = useState(~~(240 / count) - 1);
   const [strokeGap, setStrokeGap] = useState(2);
+
+  const color = useRef('#ffffff');
+  const isRandomColor = useRef(false);
+  const duration = useRef(10000);
+  const animations = useRef([]);
 
   const createCircles = () => {
     const r = 240;
@@ -27,7 +27,7 @@ export default function Clock() {
           r={r - i * (r / count)}
           strokeDasharray={strokeWidth + ', ' + strokeGap}
           strokeWidth={strokeHeight}
-          stroke={isRandomColor ? generateColor() : color}
+          stroke={isRandomColor.current ? generateColor() : color.current}
           fill='transparent'
           style={i % 2 === 0 ? { transform: `rotate(${180}deg)` } : null}
         />
@@ -39,7 +39,7 @@ export default function Clock() {
 
   const setupAnimation = async () => {
     stop();
-    animations = [];
+    animations.current = [];
     const circles = document.querySelectorAll('circle');
     const svg = document.querySelector('svg');
 
@@ -60,12 +60,12 @@ export default function Clock() {
 
       const r = +circle.getAttribute('r');
 
-      animations.push(
+      animations.current.push(
         animare(
           {
             from: [r, strokeWidth, strokeHeight, strokeGap, i % 2 === 0 ? 180 : 0],
             to: [r * 0.75, strokeWidth * 0.75, 1, strokeGap * 0.75, i % 2 === 0 ? 0 : 180],
-            duration,
+            duration: duration.current,
             ease: ease.inOut.quad,
             direction: 'alternate',
             delay: i * 150,
@@ -80,11 +80,11 @@ export default function Clock() {
   };
 
   const play = async () => {
-    for (let i = 0; i < animations.length; i++) animations[i].play();
+    for (let i = 0; i < animations.current.length; i++) animations.current[i].play();
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.length; i++) animations[i].stop(0);
+    for (let i = 0; i < animations.current.length; i++) animations.current[i].stop(0);
   };
 
   useEffect(() => {
@@ -121,15 +121,15 @@ export default function Clock() {
 
   const onRandomColorChange = e => {
     const value = e.target.checked;
-    document.querySelectorAll('circle').forEach(e => e.setAttribute('stroke', value ? generateColor() : color));
-    isRandomColor = value;
+    document.querySelectorAll('circle').forEach(e => e.setAttribute('stroke', value ? generateColor() : color.current));
+    isRandomColor.current = value;
     e.target.checked = value;
   };
 
   const onColorChange = e => {
     const value = e.target.value;
-    color = value;
-    if (isRandomColor) return;
+    color.current = value;
+    if (isRandomColor.current) return;
     document.querySelectorAll('circle').forEach(e => e.setAttribute('stroke', value));
   };
 
@@ -196,10 +196,10 @@ export default function Clock() {
           min='500'
           step='500'
           name='duration'
-          defaultValue={duration}
+          defaultValue={duration.current}
           onChange={e => {
-            duration = +e.target.value;
-            animations.forEach(a => a.setOptions({ duration }));
+            duration.current = +e.target.value;
+            animations.current.forEach(a => a.setOptions({ duration: duration.current }));
           }}
         />
 

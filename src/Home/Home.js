@@ -36,10 +36,6 @@ const Card = ({ path }) => {
     setPage(path);
     window.history.pushState({}, '', `/${path}`);
   };
-  // const navigate = (e) => {
-  //   e.preventDefault();
-  //   window.location.href = `/${path}`;
-  // };
 
   const getUrl = () => {
     try {
