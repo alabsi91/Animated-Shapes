@@ -2,9 +2,12 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
+import { useLazyCss } from '..';
 import styles from './Orbits.lazy.css';
 
 export default function Orbits() {
+  useLazyCss(styles);
+
   const [count, setCount] = useState(3);
 
   const orbitWidth = useRef(0.4);
@@ -36,9 +39,9 @@ export default function Orbits() {
               stroke: isRandomColor.current ? color : null,
               filter:
                 isGlowing.current && isRandomColor.current
-                  ? `drop-shadow(0px 0px ${glowStrength.current}px ${color})`
+                  ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
                   : isGlowing.current
-                  ? `drop-shadow(0px 0px ${glowStrength.current}px var(--color))`
+                  ? `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`
                   : null,
             }}
           />
@@ -78,7 +81,7 @@ export default function Orbits() {
           if (!document.contains(e)) pause();
           e.style.stroke = `rgb(${r},${g},${b})`;
           isGlowing.current
-            ? (e.style.filter = `drop-shadow(0px 0px ${glowStrength.current}px rgb(${r},${g},${b}))`)
+            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
             : e.style.removeProperty('filter');
         };
         const b = animare(
@@ -103,7 +106,7 @@ export default function Orbits() {
         const ellipse = ellipses[i];
         const color = generateColor();
         ellipse.style.stroke = color;
-        if (isGlowing.current) ellipse.style.filter = `drop-shadow(0px 0px ${glowStrength.current}px ${color})`;
+        if (isGlowing.current) ellipse.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
       }
     }
   };
@@ -128,12 +131,10 @@ export default function Orbits() {
   }, [count]);
 
   useEffect(() => {
-    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
 
     return () => {
-      styles.unuse();
       window.removeEventListener('focus', play);
       window.removeEventListener('blur', stop);
     };
@@ -160,7 +161,7 @@ export default function Orbits() {
   };
 
   const onStrokeWidthChange = e => {
-    document.body.style.setProperty('--stroke', e.target.value);
+    document.body.style.setProperty('--stroke-width', e.target.value);
   };
 
   const onDurationChange = e => {
@@ -183,7 +184,7 @@ export default function Orbits() {
     if (isRgb.current) {
       document.querySelectorAll('.orbit ellipse').forEach(e => {
         e.style.stroke = 'red';
-        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px ${glowStrength.current}px red)`;
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
       setupAnimation();
     } else {
@@ -194,11 +195,11 @@ export default function Orbits() {
         if (isRandomColor.current) {
           const color = generateColor();
           e.style.stroke = color;
-          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px ${glowStrength.current}px ${color})`;
+          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
           return;
         }
         e.style.removeProperty('stroke');
-        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px ${glowStrength.current}px var(--color))`;
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
       });
     }
   };
@@ -217,12 +218,12 @@ export default function Orbits() {
         if (isRandomColor.current) {
           const color = generateColor();
           e.style.stroke = color;
-          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px ${glowStrength.current}px ${color})`;
+          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
           return;
         }
         e.style.removeProperty('stroke');
         isGlowing.current
-          ? (e.style.filter = `drop-shadow(0px 0px ${glowStrength.current}px var(--color))`)
+          ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`)
           : e.style.removeProperty('filter');
       });
     }
@@ -236,13 +237,13 @@ export default function Orbits() {
         document.querySelectorAll('.orbit ellipse').forEach(e => {
           const color = generateColor();
           e.style.stroke = color;
-          e.style.filter = `drop-shadow(0px 0px ${glowStrength.current}px ${color})`;
+          e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
         });
         return;
       }
 
       document.querySelectorAll('.orbit ellipse').forEach(e => {
-        e.style.filter = `drop-shadow(0px 0px ${glowStrength.current}px var(--color))`;
+        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
       });
     } else {
       document.querySelectorAll('.orbit ellipse').forEach(e => {
@@ -257,16 +258,16 @@ export default function Orbits() {
       if (isRandomColor.current) {
         const color = generateColor();
         e.style.stroke = color;
-        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px ${glowStrength.current}px ${color})`;
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
         return;
       }
       e.style.removeProperty('stroke');
-      if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px ${glowStrength.current}px var(--color))`;
+      if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
     });
   };
 
   const onColorChange = e => {
-    document.body.style.setProperty('--color', e.target.value);
+    document.body.style.setProperty('--stroke-color', e.target.value);
   };
 
   const onBgColorChange = e => {

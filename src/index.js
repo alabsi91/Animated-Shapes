@@ -1,11 +1,21 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
-import styles from './index.lazy.css';
+import styles from './Loading.lazy.css';
 import './global.css';
-import { useState, useEffect, Suspense, lazy, createContext, StrictMode } from 'react';
+import { useState, useEffect, Suspense, lazy, createContext, StrictMode, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { animare, ease } from 'animare';
 
+export const useLazyCss = styles => {
+  useEffect(() => {
+    styles.use();
+    return styles.unuse;
+  }, []);
+};
+
 const Loading = () => {
+  useLazyCss(styles);
+
   const animation = () => {
     const outter = document.querySelector('.outter');
     const inner = document.querySelector('.inner');
@@ -18,9 +28,7 @@ const Loading = () => {
   };
 
   useEffect(() => {
-    styles.use();
     animation();
-    return styles.unuse;
   }, []);
 
   return (

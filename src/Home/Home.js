@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useContext } from 'react';
-import { Navigate } from '..';
+import { Navigate, useLazyCss } from '..';
 import styles from './Home.lazy.css';
 
 export default function Home() {
+  useLazyCss(styles);
+
   useEffect(() => {
-    styles.use();
-    return styles.unuse;
+    document.body.style.removeProperty('background-color');
   }, []);
 
   return (

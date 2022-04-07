@@ -1,15 +1,9 @@
 import { animare } from 'animare';
-import React, { useEffect } from 'react';
+import { useLazyCss } from '..';
 import styles from './MasonryLayout.lazy.css';
 
 function MasonryLayout() {
-  useEffect(() => {
-    styles.use();
-    // masonryLayout();
-    // window.addEventListener('resize', masonryLayoutOnResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    return styles.unuse;
-  }, []);
+  useLazyCss(styles);
 
   const masonryLayout = async () => {
     const gridItems = document.querySelectorAll('.grid-item');
@@ -17,7 +11,6 @@ function MasonryLayout() {
     const gridGap = parseInt(window.getComputedStyle(grid).getPropertyValue('grid-row-gap'));
     const columnCount = window.getComputedStyle(grid).getPropertyValue('grid-template-columns').split(' ').length;
     const alignment = window.getComputedStyle(grid).getPropertyValue('align-items');
-    console.log(alignment);
     // remove margins from grid items to reset
     for (let i = 0; i < gridItems.length; i++) gridItems[i].style.removeProperty('margin-top');
 

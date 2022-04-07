@@ -1,15 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
+import { useLazyCss } from '..';
 import styles from './Clock.lazy.css';
 
 export default function Clock() {
-  const [count, setCount] = useState(20);
-  const [strokeWidth, setStrokeWidth] = useState(10);
-  const [strokeHeight, setStrokeHeight] = useState(~~(240 / count) - 1);
-  const [strokeGap, setStrokeGap] = useState(2);
+  useLazyCss(styles);
 
-  const color = useRef('#ffffff');
+  const [count, setCount] = useState(20);
+
   const isRandomColor = useRef(false);
   const duration = useRef(10000);
   const animations = useRef([]);
@@ -18,18 +17,20 @@ export default function Clock() {
     const r = 240;
     const circles = [];
 
+    document.body.style.setProperty('--stroke-width', ~~(r / count) - 1);
+
     for (let i = 0; i < count; i++) {
       circles.push(
         <circle
           key={Math.random() * 100}
+          className='circles'
           cx={250}
           cy={250}
           r={r - i * (r / count)}
-          strokeDasharray={strokeWidth + ', ' + strokeGap}
-          strokeWidth={strokeHeight}
-          stroke={isRandomColor.current ? generateColor() : color.current}
-          fill='transparent'
-          style={i % 2 === 0 ? { transform: `rotate(${180}deg)` } : null}
+          style={{
+            transform: i % 2 === 0 ? `rotate(${180}deg)` : null,
+            stroke: isRandomColor.current ? generateColor() : null,
+          }}
         />
       );
     }
@@ -40,8 +41,14 @@ export default function Clock() {
   const setupAnimation = async () => {
     stop();
     animations.current = [];
-    const circles = document.querySelectorAll('circle');
-    const svg = document.querySelector('svg');
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    const circles = document.querySelectorAll('.circles');
+    const svg = document.querySelector('.circles-svg');
+    const strokeGap = parseInt(getComputedStyle(document.body).getPropertyValue('--stroke-gap'));
+    const strokeLength = parseInt(getComputedStyle(document.body).getPropertyValue('--stroke-length'));
+    const strokeWidth = parseInt(getComputedStyle(document.body).getPropertyValue('--stroke-width'));
 
     animare({ to: 360, duration: 20000, ease: ease.inOut.quad }, ([r]) => {
       svg.style.transform = `rotate(${r}deg)`;
@@ -51,7 +58,8 @@ export default function Clock() {
 
     for (let i = 0; i < circles.length; i++) {
       const circle = circles[i];
-      const callback = ([r, w, l, g, rotate]) => {
+      const callback = ([r, w, l, g, rotate], { pause }) => {
+        if (!document.contains(circle)) pause();
         circle.setAttribute('r', r);
         circle.setAttribute('stroke-dasharray', w + ', ' + g);
         circle.setAttribute('stroke-width', l);
@@ -63,8 +71,8 @@ export default function Clock() {
       animations.current.push(
         animare(
           {
-            from: [r, strokeWidth, strokeHeight, strokeGap, i % 2 === 0 ? 180 : 0],
-            to: [r * 0.75, strokeWidth * 0.75, 1, strokeGap * 0.75, i % 2 === 0 ? 0 : 180],
+            from: [r, strokeLength, strokeWidth, strokeGap, i % 2 === 0 ? 180 : 0],
+            to: [r * 0.75, strokeLength * 0.75, 1, strokeGap * 0.75, i % 2 === 0 ? 0 : 180],
             duration: duration.current,
             ease: ease.inOut.quad,
             direction: 'alternate',
@@ -89,15 +97,13 @@ export default function Clock() {
 
   useEffect(() => {
     setupAnimation();
-  }, [count, strokeWidth, strokeGap, strokeHeight]);
+  }, [count]);
 
   useEffect(() => {
-    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
 
     return () => {
-      styles.unuse();
       window.removeEventListener('focus', play);
       window.removeEventListener('blur', stop);
     };
@@ -108,29 +114,29 @@ export default function Clock() {
   };
 
   const onWidthChange = e => {
-    setStrokeWidth(+e.target.value);
+    document.body.style.setProperty('--stroke-length', e.target.value + 'px');
+    setupAnimation();
   };
 
   const onGapChange = e => {
-    setStrokeGap(+e.target.value);
+    document.body.style.setProperty('--stroke-gap', e.target.value + 'px');
+    setupAnimation();
   };
 
   const onHeightChange = e => {
-    setStrokeHeight(+e.target.value);
+    document.body.style.setProperty('--stroke-width', e.target.value + 'px');
+    setupAnimation();
   };
 
   const onRandomColorChange = e => {
-    const value = e.target.checked;
-    document.querySelectorAll('circle').forEach(e => e.setAttribute('stroke', value ? generateColor() : color.current));
-    isRandomColor.current = value;
-    e.target.checked = value;
+    isRandomColor.current = e.target.checked;
+    document.querySelectorAll('circle').forEach(e => {
+      isRandomColor.current ? (e.style.stroke = generateColor()) : e.style.removeProperty('stroke');
+    });
   };
 
   const onColorChange = e => {
-    const value = e.target.value;
-    color.current = value;
-    if (isRandomColor.current) return;
-    document.querySelectorAll('circle').forEach(e => e.setAttribute('stroke', value));
+    document.body.style.setProperty('--stroke-color', e.target.value);
   };
 
   const onBgColorChange = e => {
@@ -157,7 +163,7 @@ export default function Clock() {
   return (
     <>
       <div className='container'>
-        <svg width='99%' height='99%' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'>
+        <svg className='circles-svg' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'>
           {createCircles()}
         </svg>
       </div>
@@ -175,17 +181,24 @@ export default function Clock() {
         <label className='labels' htmlFor='storke-width'>
           Stroke width:
         </label>
-        <input className='inputs' type='number' min={1} name='stoke-width' value={strokeWidth} onChange={onWidthChange} />
+        <input className='inputs' type='number' min={1} name='stoke-width' defaultValue={10} onChange={onWidthChange} />
 
         <label className='labels' htmlFor='stroke-height'>
           Storke height:
         </label>
-        <input className='inputs' type='number' min={1} name='stroke-height' value={strokeHeight} onChange={onHeightChange} />
+        <input
+          className='inputs'
+          type='number'
+          min={1}
+          name='stroke-height'
+          defaultValue={~~(240 / count) - 1}
+          onChange={onHeightChange}
+        />
 
         <label className='labels' htmlFor='orbit-stroke-width'>
           Stroke gap:
         </label>
-        <input className='inputs' type='number' min={1} name='orbit-stroke-width' value={strokeGap} onChange={onGapChange} />
+        <input className='inputs' type='number' min={1} name='orbit-stroke-width' defaultValue={2} onChange={onGapChange} />
 
         <label className='labels' htmlFor='duration'>
           Duration:

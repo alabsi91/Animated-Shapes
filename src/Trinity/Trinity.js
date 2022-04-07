@@ -2,9 +2,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
+import { useLazyCss } from '..';
 import styles from './Trinity.lazy.css';
 
 export default function Trinity() {
+  useLazyCss(styles);
+
   const [count, setCount] = useState(8);
 
   const animations = useRef([]);
@@ -145,12 +148,10 @@ export default function Trinity() {
   }, [count]);
 
   useEffect(() => {
-    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
 
     return () => {
-      styles.unuse();
       window.removeEventListener('focus', play);
       window.removeEventListener('blur', stop);
     };

@@ -1,6 +1,4 @@
 body {
-  background-color: black;
-  margin: 0;
   overflow: hidden;
   --stroke-color: #fff;
   --stroke-width: 1px;

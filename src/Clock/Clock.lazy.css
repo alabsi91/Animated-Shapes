@@ -1,6 +1,8 @@
 body {
-  background-color: black;
-  margin: 0;
+  --stroke-length: 10px;
+  --stroke-width: 2px;
+  --stroke-gap: 2px;
+  --stroke-color: white;
 }
 
 .container {
@@ -12,8 +14,17 @@ body {
   overflow: hidden;
 }
 
-circle {
+.circles-svg {
+  width: 99%;
+  height: 99%;
+}
+
+.circles {
   transform-origin: center;
+  fill: transparent;
+  stroke-dasharray: var(--stroke-length) var(--stroke-gap);
+  stroke: var(--stroke-color);
+  stroke-width: var(--stroke-width);
 }
 
 .toggle-pannel-arrow {

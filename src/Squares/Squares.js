@@ -1,9 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
 import { useCallback, useEffect, useState, useRef } from 'react';
+import { useLazyCss } from '..';
 import styles from './Squares.lazy.css';
 
 export default function Squares() {
+  useLazyCss(styles);
+
   const [count, setCount] = useState(20);
   const [reverse, setReverse] = useState(false);
 
@@ -122,12 +125,10 @@ export default function Squares() {
   }, [count, reverse]);
 
   useEffect(() => {
-    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
 
     return () => {
-      styles.unuse();
       window.removeEventListener('focus', play);
       window.removeEventListener('blur', stop);
     };

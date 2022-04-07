@@ -1,12 +1,10 @@
 body {
-  background-color: black;
-  margin: 0;
   --width: 500px;
   --height: 500px;
-  --thickness: 50px;
-  --bg-color: black;
-  --border-color: white;
-  --border-width: 2px;
+  --thickness: 40px;
+  --color: black;
+  --stroke-color: white;
+  --stroke-width: 2px;
 }
 
 #tridiv {
@@ -124,8 +122,8 @@ body {
   height: var(--thickness);
 }
 .cub-1 .face {
-  background-color: var(--bg-color);
-  border: solid var(--border-width) var(--border-color);
+  background-color: var(--color);
+  border: solid var(--stroke-width) var(--stroke-color);
   box-sizing: border-box;
 }
 

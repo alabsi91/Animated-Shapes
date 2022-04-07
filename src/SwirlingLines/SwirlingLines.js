@@ -1,9 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
 import { useEffect, useRef, useState } from 'react';
+import { useLazyCss } from '..';
 import styles from './SwirlingLines.lazy.css';
 
 export default function SwirlingLines() {
+  useLazyCss(styles);
+
   const animations = useRef([]);
   const animationsRgb = useRef([]);
   const lineWidth = useRef(1);
@@ -142,12 +145,10 @@ export default function SwirlingLines() {
   }, [svgCount, lineLength, contain, lineMultiplier]);
 
   useEffect(() => {
-    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
 
     return () => {
-      styles.unuse();
       window.removeEventListener('focus', play);
       window.removeEventListener('blur', stop);
     };
@@ -208,7 +209,7 @@ export default function SwirlingLines() {
   };
 
   const onColorChange = e => {
-    document.body.style.setProperty('--line-color', e.target.value);
+    document.body.style.setProperty('--stroke-color', e.target.value);
   };
 
   const onBgColorChange = e => {

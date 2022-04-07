@@ -1,9 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare } from 'animare';
 import { useEffect } from 'react';
+import { useLazyCss } from '..';
 import styles from './Heart.lazy.css';
 
 export default function Heart() {
+  useLazyCss(styles);
+
   const easingX = x => 16 * Math.sin(x * 6.2) ** 3;
   const easingY = x => 13 * Math.cos(x * 6.2) - 5 * Math.cos(2 * x * 6.2) - 2 * Math.cos(3 * x * 6.2) - Math.cos(4 * x * 6.2);
 
@@ -59,9 +62,7 @@ export default function Heart() {
   };
 
   useEffect(() => {
-    styles.use();
     draw();
-    return styles.unuse;
   }, []);
 
   return (

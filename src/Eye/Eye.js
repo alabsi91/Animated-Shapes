@@ -2,9 +2,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { animare, ease } from 'animare';
 import { useState, useEffect, useRef } from 'react';
+import { useLazyCss } from '..';
 import styles from './Eye.lazy.css';
 
 export default function Eye() {
+  useLazyCss(styles);
+
   const [count, setCount] = useState(20);
 
   const animations = useRef([]);
@@ -83,12 +86,10 @@ export default function Eye() {
   }, [count]);
 
   useEffect(() => {
-    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
 
     return () => {
-      styles.unuse();
       window.removeEventListener('focus', play);
       window.removeEventListener('blur', stop);
     };

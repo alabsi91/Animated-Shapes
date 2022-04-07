@@ -2,21 +2,18 @@
 import styles from './Cuboid.lazy.css';
 import { useEffect, useState, useRef } from 'react';
 import { animare, ease } from 'animare';
+import { useLazyCss } from '..';
 
 export default function Cuboid() {
+  useLazyCss(styles);
+
   const [count, setCount] = useState(15);
 
-  const width = useRef(500);
-  const height = useRef(500);
-  const thickness = useRef(30);
-  const strokeWidth = useRef(2);
-  const backgroundColor = useRef('#000');
-  const borderColor = useRef('#fff');
   const randomColor = useRef(false);
   const strokeRandomColor = useRef(false);
+  const animations = useRef([]);
   const duration = useRef(3000);
   const delay = useRef(50);
-  const animations = useRef([]);
 
   const createCuboid = () => {
     let order = 0;
@@ -148,18 +145,10 @@ export default function Cuboid() {
   }, [count]);
 
   useEffect(() => {
-    styles.use();
-    document.body.style.setProperty('--width', width.current + 'px');
-    document.body.style.setProperty('--height', height.current + 'px');
-    document.body.style.setProperty('--thickness', thickness.current + 'px');
-    document.body.style.setProperty('--border-width', strokeWidth.current + 'px');
-    document.body.style.setProperty('--bg-color', backgroundColor.current);
-    document.body.style.setProperty('--border-color', borderColor.current);
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
 
     return () => {
-      styles.unuse();
       window.removeEventListener('focus', play);
       window.removeEventListener('blur', stop);
     };
@@ -170,46 +159,37 @@ export default function Cuboid() {
   };
 
   const onWidthChange = e => {
-    width.current = +e.target.value;
-    document.body.style.setProperty('--width', width.current + 'px');
+    document.body.style.setProperty('--width', e.target.value + 'px');
   };
 
   const onHeightChange = e => {
-    height.current = +e.target.value;
-    document.body.style.setProperty('--height', height.current + 'px');
+    document.body.style.setProperty('--height', e.target.value + 'px');
   };
 
   const onThicknessChange = e => {
-    thickness.current = +e.target.value;
-    document.body.style.setProperty('--thickness', thickness.current + 'px');
+    document.body.style.setProperty('--thickness', e.target.value + 'px');
   };
 
   const onStrokeChange = e => {
-    strokeWidth.current = +e.target.value;
-    document.body.style.setProperty('--border-width', strokeWidth.current + 'px');
+    document.body.style.setProperty('--stroke-width', e.target.value + 'px');
   };
 
   const onPerspectiveChange = e => {
-    strokeWidth.current = +e.target.value;
-    document.getElementById('tridiv').style.perspective = strokeWidth.current + 'px';
+    document.getElementById('tridiv').style.perspective = e.target.value + 'px';
   };
 
   const onDelayChange = e => {
     delay.current = +e.target.value;
-    stop();
-    animations.current = [];
     setupAnimation();
   };
 
   const onDurationChange = e => {
     duration.current = +e.target.value;
-    stop();
-    animations.current = [];
     setupAnimation();
   };
 
   const onColorChange = e => {
-    document.body.style.setProperty('--bg-color', e.target.value);
+    document.body.style.setProperty('--color', e.target.value);
   };
 
   const onRandomColorChange = e => {
@@ -226,7 +206,7 @@ export default function Cuboid() {
   };
 
   const onStrokeColorChange = e => {
-    document.body.style.setProperty('--border-color', e.target.value);
+    document.body.style.setProperty('--stroke-color', e.target.value);
   };
 
   const onStrokeRandomColorChange = e => {
@@ -287,7 +267,7 @@ export default function Cuboid() {
           step='10'
           min={1}
           name='cuboids-width'
-          defaultValue={width.current}
+          defaultValue={500}
           onChange={onWidthChange}
         />
 
@@ -300,33 +280,19 @@ export default function Cuboid() {
           step='10'
           min={1}
           name='cuboids-width'
-          defaultValue={height.current}
+          defaultValue={500}
           onChange={onHeightChange}
         />
 
         <label className='labels' htmlFor='cuboids-thickness'>
           Cuboid Thickness:
         </label>
-        <input
-          className='inputs'
-          type='number'
-          min={1}
-          name='cuboids-thickness'
-          defaultValue={thickness.current}
-          onChange={onThicknessChange}
-        />
+        <input className='inputs' type='number' min={1} name='cuboids-thickness' defaultValue={40} onChange={onThicknessChange} />
 
         <label className='labels' htmlFor='stroke-width'>
           Stroke Width:
         </label>
-        <input
-          className='inputs'
-          type='number'
-          name='stroke-width'
-          min='0'
-          defaultValue={strokeWidth.current}
-          onChange={onStrokeChange}
-        />
+        <input className='inputs' type='number' name='stroke-width' min='0' defaultValue={2} onChange={onStrokeChange} />
 
         <label className='labels' htmlFor='3D-Perspective'>
           3D Perspective:

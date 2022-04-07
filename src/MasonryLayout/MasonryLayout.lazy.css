@@ -1,12 +1,11 @@
+body {
+  overflow: overlay;
+}
 .App {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(20px, 1fr));
   grid-gap: 5px;
   align-items: flex-start;
-}
-body {
-  overflow: overlay;
-  background-color: black;
 }
 .grid-item {
   width: 20px;

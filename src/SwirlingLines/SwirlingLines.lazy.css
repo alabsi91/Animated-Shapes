@@ -1,7 +1,5 @@
 body {
-  margin: 0;
-  --line-color: #fff;
-  --line-width: 1px;
+  --stroke-color: #fff;
   --bg-color: black;
   background-color: var(--bg-color);
 }
@@ -57,7 +55,7 @@ body {
 }
 
 .lines-svg line {
-  stroke: var(--line-color);
+  stroke: var(--stroke-color);
   /* stroke-width: var(--line-width); */
   transform-origin: center;
 }

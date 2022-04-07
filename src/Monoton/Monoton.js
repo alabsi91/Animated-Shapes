@@ -4,8 +4,11 @@ import styles from './Monoton.lazy.css';
 import { useState, useEffect, cloneElement, useRef } from 'react';
 import { animare, ease } from 'animare';
 import Letters from './Letters';
+import { useLazyCss } from '..';
 
 export default function Monoton() {
+  useLazyCss(styles);
+
   const [text, setText] = useState('TEXT');
 
   const animations = useRef([]);
@@ -149,12 +152,10 @@ export default function Monoton() {
   }, [text]);
 
   useEffect(() => {
-    styles.use();
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
 
     return () => {
-      styles.unuse();
       window.removeEventListener('focus', play);
       window.removeEventListener('blur', stop);
     };

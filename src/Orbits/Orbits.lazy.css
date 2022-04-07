@@ -1,14 +1,13 @@
 body {
-  background-color: black;
-  margin: 0;
-  --color: #fff;
-  --stroke: 1px;
+  --stroke-color: #fff;
+  --stroke-width: 1px;
+  --glow-trength: 2px;
 }
 
 .orbit {
   transform-origin: center;
-  stroke: var(--color);
-  stroke-width: var(--stroke);
+  stroke: var(--stroke-color);
+  stroke-width: var(--stroke-width);
 }
 .container {
   width: 100vw;
@@ -24,7 +23,7 @@ ellipse {
 }
 
 circle {
-  fill: var(--color);
+  fill: var(--stroke-color);
 }
 
 .toggle-pannel-arrow {
