@@ -16,7 +16,6 @@ export default function Orbits() {
   const isRgb = useRef(false);
   const isDisco = useRef(false);
   const isGlowing = useRef(false);
-  const glowStrength = useRef(3);
   const delay = useRef(150);
   const duration = useRef(2000);
   const animations = useRef([]);
