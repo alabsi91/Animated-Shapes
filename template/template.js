@@ -3,9 +3,9 @@
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
 import { useLazyCss } from '..';
-import styles from './$$$$$.lazy.css';
+import styles from './SSSSS.lazy.css';
 
-export default function $$$$$() {
+export default function SSSSS() {
   useLazyCss(styles);
 
   const [count, setCount] = useState(10);
@@ -19,12 +19,12 @@ export default function $$$$$() {
   const animations = useRef([]);
   const animationRgb = useRef([]);
 
-  const create$$$$$ = () => {
+  const createSSSSS = () => {
     const result = [];
     for (let i = 0; i < count; i++) {
       result.push(
         <circle
-          className='$$$$$'
+          className='SSSSS'
           key={Math.random() * 100}
           cx='50%'
           cy='50%'
@@ -49,10 +49,10 @@ export default function $$$$$() {
     animations.current = [];
     animationRgb.current = [];
 
-    const $$$$$s = document.querySelectorAll('.$$$$$');
+    const SSSSSs = document.querySelectorAll('.SSSSS');
 
-    for (let i = 0; i < $$$$$s.length; i++) {
-      const e = $$$$$s[i];
+    for (let i = 0; i < SSSSSs.length; i++) {
+      const e = SSSSSs[i];
 
       const callback = ([r], { pause }) => {
         if (!document.body.contains(e)) pause();
@@ -85,12 +85,12 @@ export default function $$$$$() {
   };
 
   const disco = async () => {
-    const $$$$$s = document.querySelectorAll('.$$$$$');
+    const SSSSSs = document.querySelectorAll('.SSSSS');
     while (isDisco.current) {
       await new Promise(resolve => setTimeout(resolve, 500));
       if (!isDisco.current) return;
-      for (let i = 0; i < $$$$$s.length; i++) {
-        const e = $$$$$s[i];
+      for (let i = 0; i < SSSSSs.length; i++) {
+        const e = SSSSSs[i];
         const color = generateColor();
         e.style.stroke = color;
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
@@ -153,7 +153,7 @@ export default function $$$$$() {
     document.getElementById('disco-check').disabled = isRgb.current;
 
     if (isRgb.current) {
-      document.querySelectorAll('.$$$$$').forEach(e => {
+      document.querySelectorAll('.SSSSS').forEach(e => {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
@@ -162,7 +162,7 @@ export default function $$$$$() {
       animationRgb.current.forEach(a => a.stop(0));
       animationRgb.current = [];
       await new Promise(resolve => setTimeout(resolve, 100));
-      document.querySelectorAll('.$$$$$').forEach(e => {
+      document.querySelectorAll('.SSSSS').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
           e.style.stroke = color;
@@ -185,7 +185,7 @@ export default function $$$$$() {
       disco();
     } else {
       if (isRgb.current) setupAnimation();
-      document.querySelectorAll('.$$$$$').forEach(e => {
+      document.querySelectorAll('.SSSSS').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
           e.style.stroke = color;
@@ -205,7 +205,7 @@ export default function $$$$$() {
     if (isGlowing.current) {
       if (isRgb.current) return;
       if (isRandomColor.current) {
-        document.querySelectorAll('.$$$$$').forEach(e => {
+        document.querySelectorAll('.SSSSS').forEach(e => {
           const color = generateColor();
           e.style.stroke = color;
           e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
@@ -213,11 +213,11 @@ export default function $$$$$() {
         return;
       }
 
-      document.querySelectorAll('.$$$$$').forEach(e => {
+      document.querySelectorAll('.SSSSS').forEach(e => {
         e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
       });
     } else {
-      document.querySelectorAll('.$$$$$').forEach(e => {
+      document.querySelectorAll('.SSSSS').forEach(e => {
         e.style.removeProperty('filter');
       });
     }
@@ -225,7 +225,7 @@ export default function $$$$$() {
 
   const onRandomColorChange = e => {
     isRandomColor.current = e.target.checked;
-    document.querySelectorAll('.$$$$$').forEach(e => {
+    document.querySelectorAll('.SSSSS').forEach(e => {
       if (isRandomColor.current) {
         const color = generateColor();
         e.style.stroke = color;
@@ -270,15 +270,15 @@ export default function $$$$$() {
 
       <div className='container'>
         <svg width='100%' height='100%' viewBox='0 0 500 500' fill='none'>
-          {create$$$$$()}
+          {createSSSSS()}
           <circle cx='50%' cy='50%' r='1' />
         </svg>
 
         <div className='controls'>
-          <label className='labels' htmlFor='$$$$$-count'>
-            $$$$$ Counts:
+          <label className='labels' htmlFor='SSSSS-count'>
+            SSSSS Counts:
           </label>
-          <input className='inputs' type='number' min={1} name='$$$$$-count' value={count} onChange={onCountChange} />
+          <input className='inputs' type='number' min={1} name='SSSSS-count' value={count} onChange={onCountChange} />
 
           <label className='labels' htmlFor='orbit-stroke-width'>
             Stroke width:

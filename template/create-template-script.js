@@ -1,6 +1,12 @@
 const fs = require('fs');
+const util = require('util');
 const readline = require('readline');
 require('colors');
+
+const mkdir = util.promisify(fs.mkdir);
+const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
+const exists = util.promisify(fs.exists);
 
 let name;
 
@@ -14,30 +20,39 @@ rl.question('Enter Template name: '.cyan, function (result) {
   rl.close();
 });
 
-rl.on('close', function () {
-  console.log(('\nCreating ' + name + ' ...').yellow);
-
-  if (!fs.existsSync(`./src/${name}`)) fs.mkdirSync(`./src/${name}`);
-  else {
-    console.log('\nTemplate already exists.\nTry another name.'.red);
-    process.exit(0);
+rl.on('close', async function () {
+  // vaidate name for a valid javascript variable.
+  const notAllowed = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
+  if (!notAllowed.test(name)) {
+    console.log('\nTemplate name must be a valid identifier.\n'.red);
+    process.exit(1);
   }
 
-  fs.readFile('./template/template.js', 'utf8', (err, data) => {
-    if (err) throw err;
+  const isFolderExists = await exists(`./src/${name}`);
 
-    const js_template = data.replaceAll('$$$$$', name);
-    fs.writeFileSync(`./src/${name}/${name}.js`, js_template);
-  });
+  if (isFolderExists) {
+    console.log(`\nFolder with the same name already exists. Try with another name.\n`.red);
+    process.exit(1);
+  }
 
-  fs.readFile('./template/template.css', 'utf8', (err, data) => {
-    if (err) throw err;
+  await mkdir(`./src/${name}`);
 
-    const css_template = data.replaceAll('SSSSS', name);
-    fs.writeFile(`./src/${name}/${name}.lazy.css`, css_template, err => {
-      if (err) throw err;
-      console.log('\nTemplate created.'.green);
-      process.exit(0);
-    });
-  });
+  console.log(('\nCreating ' + name + ' ...').yellow);
+
+  const js_template = await readFile('./template/template.js', 'utf8');
+  await writeFile(`./src/${name}/${name}.js`, js_template.replaceAll('SSSSS', name));
+
+  const css_template = await readFile('./template/template.css', 'utf8');
+  await writeFile(`./src/${name}/${name}.lazy.css`, css_template.replaceAll('SSSSS', name));
+
+  // insert card to Home.js
+  const homeJs = await readFile('./src/Home/Home.js', 'utf8');
+  const match = homeJs.match(/<div className='container'>/);
+  const index = match.index + match[0].length;
+  const card = `\n      <Card path='${name}' />`;
+  const newHomeJs = homeJs.substring(0, index) + card + homeJs.substring(index);
+  await writeFile('./src/Home/Home.js', newHomeJs);
+
+  console.log('\nTemplate created successfully.\n'.green);
+  process.exit(0);
 });
