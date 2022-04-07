@@ -27,6 +27,7 @@
   "scripts": {
     "start": "node webpack.set.js && react-scripts start",
     "build": "node webpack.set.js && react-scripts build",
+    "create-template": "node template/create-template-script.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -47,5 +48,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "colors": "^1.4.0"
   }
 }

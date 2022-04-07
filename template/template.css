@@ -1,0 +1,59 @@
+body {
+  --stroke-color: #fff;
+  --stroke-width: 1px;
+  --glow-trength: 2px;
+}
+
+.SSSSS {
+  stroke: var(--stroke-color);
+  stroke-width: var(--stroke-width);
+  fill: none;
+}
+
+.container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.toggle-pannel-arrow {
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  width: 24px;
+  height: 24px;
+  fill: white;
+  transform-origin: center;
+  cursor: pointer;
+}
+.controls {
+  position: fixed;
+  left: 0;
+  top: 70px;
+  padding-left: 20px;
+  height: calc(100vh - 70px);
+  overflow-x: hidden;
+}
+.inputs {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 20px;
+}
+.inputs[type='checkbox'] {
+  display: inline-block;
+}
+.inputs[type='number'] {
+  width: 90%;
+}
+.inputs[type='color'] {
+  display: inline-block;
+  margin-right: 10px;
+}
+.labels {
+  color: white;
+  font-size: 18px;
+  font-family: 'Courier New', Courier, monospace;
+}

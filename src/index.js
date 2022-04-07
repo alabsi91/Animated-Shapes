@@ -46,8 +46,14 @@ const App = () => {
   const [page, setPage] = useState(window.location.pathname.replace('/', '') || 'Home');
 
   const Render = () => {
-    const path = page;
-    const Component = lazy(() => import(`./${path}/${path}`));
+    const Component = lazy(() => {
+      try {
+        require(`./${page}/${page}`);
+        return import(`./${page}/${page}`);
+      } catch (e) {
+        return import('./Page404.js');
+      }
+    });
     return <Component />;
   };
 
