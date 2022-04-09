@@ -1,66 +1,63 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
-import { useEffect, useRef, useState } from 'react';
-import { useLazyCss } from '..';
+import { useEffect, useState, useRef } from 'react';
+import { addUrlQuery, parseUrl, useLazyCss, sleep } from '..';
 import styles from './SwirlingLines.lazy.css';
 
 export default function SwirlingLines() {
   useLazyCss(styles);
 
+  const [count, setCount] = useState(parseUrl().count ?? 10);
+  const [multiplier, setMultiplier] = useState(parseUrl().multiplier ?? 3);
+
+  const isRandomColor = useRef(parseUrl().isRandomColor ?? false);
+  const isDisco = useRef(parseUrl().isDisco ?? false);
+  const isGlowing = useRef(parseUrl().isGlowing ?? false);
+  const easing = useRef(parseUrl().easing ?? 'ease.inOut.quad');
+  const delay = useRef(parseUrl().delay ?? 150);
+  const duration = useRef(parseUrl().duration ?? 1000);
+  const isAnimation = useRef(parseUrl().isAnimation ?? true);
   const animations = useRef([]);
+  const isRgb = useRef(parseUrl().isRgb ?? false);
   const animationsRgb = useRef([]);
-  const lineWidth = useRef(1);
-  const isRandomColor = useRef(false);
-  const isRgb = useRef(false);
-  const containeRef = useRef(true);
-  const lineLengthRef = useRef(50);
 
-  const [lineLength, setLineLength] = useState(50);
-  const [lineMultiplier, setlineMultiplier] = useState(3);
-  const [contain, setContain] = useState(true);
-  const [svgCount, setSvgCount] = useState(
-    ~~(window.innerHeight < window.innerWidth ? window.innerHeight / lineLength : window.innerWidth / lineLength)
-  );
+  const createSwirlingLiness = () => {
+    const result = [];
+    const lineLength = 250 / count;
 
-  const createLines = (count = lineMultiplier, size = lineLength) => {
-    const angle = 180 / count;
-    const lineElements = [];
     for (let i = 0; i < count; i++) {
-      const line = (
-        <line
-          key={'line' + i}
-          x1={0}
-          y1='50%'
-          x2='100%'
-          y2='50%'
-          style={{ stroke: isRandomColor.current && !isRgb.current ? generateColor() : isRgb.current ? 'red' : null }}
-          strokeWidth={(100 / size) * lineWidth.current}
-          transform={`rotate(${angle * i})`}
+      const color = generateColor();
+      const lineCount = multiplier * 2 * (i + 1);
+      const xy = [];
+
+      for (let point = 0; point < lineCount; point++) {
+        const angle = 360 / lineCount;
+        const x1 = +(250 + Math.cos((Math.PI * angle * point) / 180) * (lineLength * i)).toFixed(2);
+        const y1 = +(250 + Math.sin((Math.PI * angle * point) / 180) * (lineLength * i)).toFixed(2);
+        const x2 = +(x1 + Math.cos((Math.PI * angle * point) / 180) * lineLength).toFixed(2);
+        const y2 = +(y1 + Math.sin((Math.PI * angle * point) / 180) * lineLength).toFixed(2);
+        xy.push(`M ${x1} ${y1} L ${x2} ${y2}`);
+      }
+
+      result.push(
+        <path
+          className='SwirlingLines'
+          key={'SwirlingLines' + i}
+          d={xy.join(' ')}
+          style={{
+            stroke: isRandomColor.current ? color : null,
+            filter:
+              isGlowing.current && isRandomColor.current
+                ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
+                : isGlowing.current
+                ? `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`
+                : null,
+          }}
         />
       );
-      lineElements.push(line);
     }
-    return (
-      <svg
-        key={'svg' + Math.random() * 100}
-        className='lines-svg'
-        width={size}
-        height={size}
-        style={{ top: `calc(50% - ${size / 2}px)`, left: `calc(50% - ${size / 2}px)`, transform: 'rotate(0deg)' }}
-        viewBox='0 0 100 100'
-      >
-        <circle cx='50%' cy='50%' r='50%' />
-        {lineElements}
-      </svg>
-    );
-  };
-
-  const render = count => {
-    const results = [];
-    for (let i = 0; i < count; i++) {
-      results.unshift(createLines(lineMultiplier * (i + 1), lineLength * (i + 1)));
-    }
-    return results;
+    return result;
   };
 
   const setupAnimation = () => {
@@ -68,83 +65,104 @@ export default function SwirlingLines() {
     animations.current = [];
     animationsRgb.current = [];
 
-    const svgs = document.querySelectorAll('.lines-svg');
+    const SwirlingLines = document.querySelectorAll('.SwirlingLines');
+    let getEase = easing.current.split('.');
+    getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
-    for (let i = 0; i < svgs.length; i++) {
-      const el = svgs[i];
-      const angle = 360 / (svgs.length * lineMultiplier - i * lineMultiplier);
-      const duration = 1000 * ((svgs.length * lineMultiplier - i * lineMultiplier) / 4);
-      const delay = 400 * ((i * lineMultiplier) / 4);
+    for (let i = 0; i < SwirlingLines.length; i++) {
+      const e = SwirlingLines[i];
 
-      const callback = ([rotate], { pause }) => {
-        if (!document.body.contains(el)) pause();
-        el.style.transform = `rotate(${rotate}deg)`;
-      };
+      const length = e.getTotalLength();
+      e.style.strokeDasharray = length + 'px';
 
-      animations.current.push(
-        animare(
+      if (isAnimation.current) {
+        const duration_custom = duration.current + count * (multiplier * 4) * i;
+        const delay_custom = duration.current + count * (multiplier * 5) * (count - 1 - i) + delay.current * 2;
+
+        const callback = ([r], { pause }) => {
+          if (!document.body.contains(e)) pause();
+          e.style.transform = `rotate(${r}deg)`;
+        };
+
+        const a = animare(
           {
-            to: angle * ((svgs.length * lineMultiplier - i * lineMultiplier) / 4),
-            duration,
-            delay,
-            direction: 'alternate',
+            to: 90,
+            duration: duration_custom,
+            delay: i * delay.current,
             autoPlay: false,
-            repeat: -1,
+            ease: getEase,
           },
           callback
-        )
-      );
+        ).next({ to: 0, delay: delay_custom });
+        a.setTimelineOptions({ repeat: -1 });
+        animations.current.push(a);
+      }
+
       if (isRgb.current) {
-        const callback_color = ([r, g, b], { progress, setOptions, pause }) => {
-          if (!document.contains(el)) pause();
-          el.childNodes.forEach(child => {
-            if (child.tagName === 'line') child.style.stroke = `rgb(${r},${g},${b})`;
-          });
-          if (progress === 100) {
-            setOptions({ delay: (svgs.length - 1 - i) * 150 + i * 150 });
-          }
+        const callback_color = ([r, g, b], { pause, progress, setOptions }) => {
+          if (!document.body.contains(e)) pause();
+          e.style.stroke = `rgb(${r},${g},${b})`;
+          isGlowing.current
+            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
+            : e.style.removeProperty('filter');
+          if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
         };
-        const b = animare({ from: [255, 0, 0], to: [0, 0, 255], duration: 4000, delay: 150 * i, autoPlay: false }, callback_color)
+        const a_rgb = animare(
+          { from: [255, 0, 0], to: [0, 0, 255], duration: 2000, delay: i * delay.current, autoPlay: false },
+          callback_color
+        )
           .next({ to: [0, 255, 0] })
           .next({ to: [255, 0, 0] });
-        b.setTimelineOptions({ repeat: -1 });
-        animationsRgb.current.push(b);
+        a_rgb.setTimelineOptions({ repeat: -1 });
+        animationsRgb.current.push(a_rgb);
       }
     }
     play();
   };
 
-  const play = async () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i].play();
-      animationsRgb.current[i]?.setOptions({ delay: 150 * i });
-      animationsRgb.current[i]?.play();
+  const disco = async () => {
+    const SwirlingLines = document.querySelectorAll('.SwirlingLines');
+    while (isDisco.current) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      if (!isDisco.current) return;
+      for (let i = 0; i < SwirlingLines.length; i++) {
+        const e = SwirlingLines[i];
+        const color = generateColor();
+        e.style.stroke = color;
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
+      }
+    }
+  };
+
+  const play = () => {
+    for (let i = 0; i < count; i++) {
+      animations.current[i]?.setOptions({ delay: i * delay.current });
+      animationsRgb.current[i]?.setOptions({ delay: i * delay.current });
+      animations.current[i]?.play();
+      animationsRgb.current?.[i]?.play();
     }
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i].stop(0);
-      animationsRgb.current[i]?.stop(0);
+    for (let i = 0; i < count; i++) {
+      animations.current[i]?.stop(0);
+      animationsRgb.current?.[i]?.stop(0);
     }
   };
 
   useEffect(() => {
-    window.addEventListener('resize', () => {
-      if (containeRef.current)
-        setSvgCount(
-          ~~(window.innerHeight < window.innerWidth
-            ? window.innerHeight / lineLengthRef.current
-            : window.innerWidth / lineLengthRef.current)
-        );
-    });
-  }, []);
-
-  useEffect(() => {
     setupAnimation();
-  }, [svgCount, lineLength, contain, lineMultiplier]);
+    if (isDisco.current) disco();
+  }, [count, multiplier]);
 
   useEffect(() => {
+    const params = parseUrl();
+    if (params.strokeColor) document.body.style.setProperty('--stroke-color', '#' + params.strokeColor);
+    if (params.strokeWidth) document.body.style.setProperty('--stroke-width', params.strokeWidth + 'px');
+    if (params.glowStrength) document.body.style.setProperty('--glow-trength', params.glowStrength + 'px');
+    if (params.backgroundColor) onBgColorChange('#' + params.backgroundColor);
+    if (params.zoom) onZoomChange(params.zoom);
+
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
 
@@ -154,76 +172,167 @@ export default function SwirlingLines() {
     };
   }, []);
 
-  const lineLengthInput = e => {
-    const value = +e.target.value;
-    setLineLength(value);
-    lineLengthRef.current = value;
-    if (contain) setSvgCount(~~(window.innerHeight < window.innerWidth ? window.innerHeight / value : window.innerWidth / value));
+  const onCountChange = e => {
+    const value = +e.target.value > +e.target.max ? +e.target.max : +e.target.value;
+    setCount(value);
+    addUrlQuery({ count: value });
   };
 
-  const lineWidthInput = e => {
-    lineWidth.current = +e.target.value;
-    const svgs = document.querySelectorAll('.lines-svg');
-    for (let i = 0; i < svgs.length; i++) {
-      const el = svgs[i];
-      const size = parseInt(getComputedStyle(el).getPropertyValue('width'));
-      const lines = el.childNodes;
-      lines.forEach(line => {
-        if (line.tagName === 'line') line.style.strokeWidth = `${(100 / size) * +e.target.value}px`;
-      });
-    }
+  const onMultiplierChange = e => {
+    const value = +e.target.value > +e.target.max ? +e.target.max : +e.target.value;
+    setMultiplier(value);
+    addUrlQuery({ multiplier: value });
   };
 
-  const lineMultiplierInput = e => {
-    setlineMultiplier(+e.target.value);
+  const onStrokeWidthChange = e => {
+    document.body.style.setProperty('--stroke-width', e.target.value);
+    addUrlQuery({ strokeWidth: +e.target.value });
   };
 
-  const svgCountInput = e => {
-    setSvgCount(+e.target.value);
+  const onDurationChange = e => {
+    duration.current = +e.target.value;
+    addUrlQuery({ duration: +e.target.value });
+    setupAnimation();
   };
 
-  const containInput = e => {
-    setContain(e.target.checked);
-    containeRef.current = e.target.checked;
-    if (e.target.checked)
-      setSvgCount(~~(window.innerHeight < window.innerWidth ? window.innerHeight / lineLength : window.innerWidth / lineLength));
+  const onDelayChange = e => {
+    delay.current = +e.target.value;
+    addUrlQuery({ delay: +e.target.value });
+    setupAnimation();
+  };
+
+  const onEaseChange = e => {
+    easing.current = e.target.value;
+    addUrlQuery({ easing: e.target.value });
+    setupAnimation();
+  };
+
+  const onZoomChange = e => {
+    document.querySelector('.SwirlingLines-svg').style.height = (e?.target?.value ?? e) + '%';
+    document.querySelector('.SwirlingLines-svg').style.width = (e?.target?.value ?? e) + '%';
+    if (e?.target?.value) addUrlQuery({ zoom: +e.target.value });
   };
 
   const onRGBChange = async e => {
     isRgb.current = e.target.checked;
+    addUrlQuery({ isRgb: isRgb.current });
     document.getElementById('random-check').disabled = isRgb.current;
+    document.getElementById('disco-check').disabled = isRgb.current;
+    document.getElementById('color-input').disabled = isRgb.current;
 
     if (isRgb.current) {
-      document.querySelectorAll('.lines-svg line').forEach(e => {
+      document.querySelectorAll('.SwirlingLines').forEach(e => {
         e.style.stroke = 'red';
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
       setupAnimation();
     } else {
-      animationsRgb.current.forEach(a => a.pause());
+      animationsRgb.current.forEach(a => a.stop(0));
       animationsRgb.current = [];
-      await new Promise(resolve => setTimeout(resolve, 50));
-      document.querySelectorAll('.lines-svg line').forEach(e => {
-        e.style.stroke = isRandomColor.current ? generateColor() : null;
+      await sleep(100);
+      document.querySelectorAll('.SwirlingLines').forEach(e => {
+        if (isRandomColor.current) {
+          const color = generateColor();
+          e.style.stroke = color;
+          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
+          return;
+        }
+        e.style.removeProperty('stroke');
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
       });
     }
   };
 
-  const onColorChange = e => {
-    document.body.style.setProperty('--stroke-color', e.target.value);
+  const onDiscoChange = e => {
+    isDisco.current = e.target.checked;
+    addUrlQuery({ isDisco: isDisco.current });
+    document.getElementById('random-check').disabled = isDisco.current;
+    document.getElementById('rgb-check').disabled = isDisco.current;
+    document.getElementById('color-input').disabled = isDisco.current;
+
+    if (isDisco.current) {
+      if (isRgb.current) animationsRgb.current.forEach(a => a.pause());
+      disco();
+    } else {
+      if (isRgb.current) setupAnimation();
+      document.querySelectorAll('.SwirlingLines').forEach(e => {
+        if (isRandomColor.current) {
+          const color = generateColor();
+          e.style.stroke = color;
+          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
+          return;
+        }
+        e.style.removeProperty('stroke');
+        isGlowing.current
+          ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`)
+          : e.style.removeProperty('filter');
+      });
+    }
   };
 
-  const onBgColorChange = e => {
-    document.body.style.setProperty('--bg-color', e.target.value);
-    const inverted = invertColor(getComputedStyle(document.body).backgroundColor);
-    [...document.getElementsByClassName('labels')].forEach(el => (el.style.color = inverted));
-    document.querySelector('.toggle-pannel-arrow').style.fill = inverted;
+  const onGlowChange = e => {
+    isGlowing.current = e.target.checked;
+    addUrlQuery({ isGlowing: isGlowing.current });
+    document.getElementById('glow-input').disabled = !isGlowing.current;
+
+    if (isGlowing.current) {
+      if (isRgb.current) return;
+      if (isRandomColor.current) {
+        document.querySelectorAll('.SwirlingLines').forEach(e => {
+          const color = generateColor();
+          e.style.stroke = color;
+          e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
+        });
+        return;
+      }
+
+      document.querySelectorAll('.SwirlingLines').forEach(e => {
+        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
+      });
+    } else {
+      document.querySelectorAll('.SwirlingLines').forEach(e => {
+        e.style.removeProperty('filter');
+      });
+    }
+  };
+
+  const onGlowStrengthChange = e => {
+    document.body.style.setProperty('--glow-trength', e.target.value + 'px');
+    addUrlQuery({ glowStrength: e.target.value });
   };
 
   const onRandomColorChange = e => {
     isRandomColor.current = e.target.checked;
-    document.querySelectorAll('.lines-svg line').forEach(el => {
-      isRandomColor.current ? (el.style.stroke = generateColor()) : el.style.removeProperty('stroke');
+
+    addUrlQuery({ isRandomColor: e.target.checked });
+
+    document.getElementById('color-input').disabled = isRandomColor.current;
+    document.getElementById('rgb-check').disabled = isRandomColor.current;
+    document.getElementById('disco-check').disabled = isRandomColor.current;
+
+    document.querySelectorAll('.SwirlingLines').forEach(e => {
+      if (isRandomColor.current) {
+        const color = generateColor();
+        e.style.stroke = color;
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
+        return;
+      }
+      e.style.removeProperty('stroke');
+      if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
     });
+  };
+
+  const onColorChange = e => {
+    document.body.style.setProperty('--stroke-color', e.target.value);
+    addUrlQuery({ strokeColor: e.target.value.replace('#', '') });
+  };
+
+  const onBgColorChange = e => {
+    document.body.style.backgroundColor = e?.target?.value ?? e;
+    if (e?.target?.value) addUrlQuery({ backgroundColor: e.target.value.replace('#', '') });
+    const inverted = invertColor(getComputedStyle(document.body).backgroundColor);
+    [...document.getElementsByClassName('labels')].forEach(el => (el.style.color = inverted));
+    document.querySelector('.toggle-pannel-arrow').style.fill = inverted;
   };
 
   const togglePannel = () => {
@@ -242,96 +351,221 @@ export default function SwirlingLines() {
 
   return (
     <>
-      <div className='container'>{render(svgCount)}</div>
-
       <svg className='toggle-pannel-arrow' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' onClick={togglePannel}>
         <path d='M11.67 3.87L9.9 2.1 0 12l9.9 9.9 1.77-1.77L3.54 12z' />
       </svg>
 
-      <div className='controls'>
-        <label className='labels' htmlFor='line-length'>
-          Line Length:
-        </label>
-        <input className='inputs' type='number' min={1} name='line-length' value={lineLength} onChange={lineLengthInput} />
+      <div className='container'>
+        <svg className='SwirlingLines-svg' viewBox='0 0 500 500'>
+          {createSwirlingLiness()}
+        </svg>
 
-        <label className='labels' htmlFor='line-widht'>
-          Line Width:
-        </label>
-        <input
-          className='inputs'
-          type='number'
-          min={1}
-          name='line-width'
-          defaultValue={lineWidth.current}
-          onChange={lineWidthInput}
-        />
+        <div className='controls'>
+          <label className='labels' htmlFor='SwirlingLines-count'>
+            Circles Count:
+          </label>
+          <input
+            className='inputs'
+            type='number'
+            min={1}
+            max={100}
+            name='SwirlingLines-Multiplier'
+            value={count}
+            onChange={onCountChange}
+          />
 
-        <label className='labels' htmlFor='line-multiplier'>
-          Line Multiplier:
-        </label>
-        <input
-          className='inputs'
-          type='number'
-          min={1}
-          name='line-multiplier'
-          value={lineMultiplier}
-          onChange={lineMultiplierInput}
-        />
+          <label className='labels' htmlFor='SwirlingLines-Multiplier'>
+            Line Multiplier:
+          </label>
+          <input
+            className='inputs'
+            type='number'
+            min={1}
+            max={70}
+            name='SwirlingLines-Multiplier'
+            value={multiplier}
+            onChange={onMultiplierChange}
+          />
 
-        <label className='labels' htmlFor='svg-counts'>
-          Circles count:
-        </label>
-        <input
-          className='inputs'
-          type='number'
-          min={1}
-          name='svg-counts'
-          value={svgCount}
-          onChange={svgCountInput}
-          disabled={contain}
-        />
+          <label className='labels' htmlFor='SwirlingLines-stroke-width'>
+            Stroke width:
+          </label>
+          <input
+            className='inputs'
+            type='number'
+            min={1}
+            name='SwirlingLines-stroke-width'
+            defaultValue={parseUrl().strokeWidth ?? 1}
+            onChange={onStrokeWidthChange}
+          />
 
-        <input className='inputs' type='checkbox' name='contain' checked={contain} onChange={containInput} />
-        <label className='labels' htmlFor='contain'>
-          {' '}
-          Contain Size
-        </label>
+          <label className='labels' htmlFor='duration'>
+            Duration:
+          </label>
+          <input
+            className='inputs'
+            type='number'
+            step='50'
+            name='duration'
+            min='0'
+            defaultValue={duration.current}
+            onChange={onDurationChange}
+          />
 
-        <br />
-        <label className='labels' htmlFor='color'>
-          Lines Color:
-        </label>
+          <label className='labels' htmlFor='delay'>
+            Delay:
+          </label>
+          <input
+            className='inputs'
+            type='number'
+            step='10'
+            name='delay'
+            min='0'
+            defaultValue={delay.current}
+            onChange={onDelayChange}
+          />
 
-        <br />
-        <br />
-        <input className='inputs' id='rgb-check' type='checkbox' name='RGB-Mode' onChange={onRGBChange} />
-        <label className='labels' htmlFor='RGB-Mode'>
-          {' '}
-          RGB Mode
-        </label>
+          <label className='labels' htmlFor='ease-select'>
+            Ease:
+          </label>
+          <select className='select' name='ease-select' defaultValue={easing.current} onChange={onEaseChange}>
+            <optgroup />
+            <option value='linear'>- linear</option>
+            <optgroup />
+            {Object.keys(ease.in).map(e => (
+              <option key={`ease.in.${e}`} value={`ease.in.${e}`}>{`- in ${e}`}</option>
+            ))}
+            <optgroup />
+            {Object.keys(ease.out).map(e => (
+              <option key={`ease.out.${e}`} value={`ease.out.${e}`}>{`- out ${e}`}</option>
+            ))}
+            <optgroup />
+            {Object.keys(ease.inOut).map(e => (
+              <option key={`ease.inOut.${e}`} value={`ease.inOut.${e}`}>{`- inOut ${e}`}</option>
+            ))}
+            <optgroup />
+          </select>
 
-        <br />
-        <input className='inputs' id='random-check' type='checkbox' name='randomColor' onChange={onRandomColorChange} />
-        <label className='labels' htmlFor='randomColor'>
-          {' '}
-          Random Colors
-        </label>
-        <br />
-        <input className='inputs' type='color' name='color' defaultValue='#ffffff' onChange={onColorChange} />
+          <label className='labels' htmlFor='zoom'>
+            Zoom:
+          </label>
+          <input
+            className='inputs'
+            type='range'
+            min='5'
+            max='150'
+            name='zoom'
+            defaultValue={parseUrl().zoom ?? 95}
+            onChange={onZoomChange}
+          />
 
-        <br />
-        <label className='labels' htmlFor='bg-color'>
-          Background Color:
-        </label>
-        <br />
-        <input className='inputs' type='color' name='bg-color' defaultValue='#00000' onChange={onBgColorChange} />
+          <input
+            className='inputs'
+            id='rgb-check'
+            type='checkbox'
+            name='RGB-Mode'
+            defaultChecked={isRgb.current}
+            disabled={isDisco.current || isRandomColor.current}
+            onChange={onRGBChange}
+          />
+          <label className='labels' htmlFor='RGB-Mode'>
+            {' '}
+            RGB
+          </label>
+
+          <br />
+          <input
+            className='inputs'
+            id='disco-check'
+            type='checkbox'
+            name='Disco-Mode'
+            defaultChecked={isDisco.current}
+            disabled={isRgb.current || isRandomColor.current}
+            onChange={onDiscoChange}
+          />
+          <label className='labels' htmlFor='Disco-Mode'>
+            {' '}
+            Disco
+          </label>
+
+          <br />
+          <input
+            className='inputs'
+            id='random-check'
+            type='checkbox'
+            name='randomColor'
+            defaultChecked={isRandomColor.current}
+            disabled={isDisco.current || isRgb.current}
+            onChange={onRandomColorChange}
+          />
+          <label className='labels' htmlFor='randomColor'>
+            {' '}
+            Random Colors
+          </label>
+
+          <br />
+          <input
+            className='inputs'
+            id='glow-check'
+            type='checkbox'
+            name='Glow-Mode'
+            defaultChecked={isGlowing.current}
+            onChange={onGlowChange}
+          />
+          <label className='labels' htmlFor='Glow-Mode'>
+            {' '}
+            Glow
+          </label>
+
+          <br />
+          <label className='labels' htmlFor='glow-strength'>
+            Glow strength:
+          </label>
+          <input
+            className='inputs'
+            id='glow-input'
+            step='0.5'
+            type='number'
+            name='glow-strength'
+            min='0.5'
+            defaultValue={parseUrl().glowStrength ?? 1}
+            onChange={onGlowStrengthChange}
+            disabled={!isGlowing.current}
+          />
+
+          <input
+            className='inputs'
+            id='color-input'
+            type='color'
+            name='color'
+            defaultValue={'#' + (parseUrl()?.strokeColor ?? 'ffffff')}
+            disabled={isRandomColor.current || isDisco.current || isRgb.current}
+            onChange={onColorChange}
+          />
+          <label className='labels' htmlFor='color'>
+            Stroke Color
+          </label>
+
+          <br />
+          <br />
+
+          <input
+            className='inputs'
+            type='color'
+            name='bg-color'
+            defaultValue={'#' + (parseUrl()?.backgroundColor ?? '000000')}
+            onChange={onBgColorChange}
+          />
+          <label className='labels' htmlFor='bg-color'>
+            Background Color
+          </label>
+        </div>
       </div>
     </>
   );
 }
 
 const randomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-
 const hslToHex = (h, s, l) => {
   l /= 100;
   const a = (s * Math.min(l, 1 - l)) / 100;
@@ -344,7 +578,6 @@ const hslToHex = (h, s, l) => {
   };
   return `#${f(0)}${f(8)}${f(4)}`;
 };
-
 const generateColor = () => {
   const h = randomNumber(50, 360);
   const s = randomNumber(50, 100);

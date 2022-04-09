@@ -2,38 +2,41 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { useLazyCss } from '..';
+import { addUrlQuery, parseUrl, useLazyCss, sleep } from '..';
 import styles from './SSSSS.lazy.css';
 
 export default function SSSSS() {
   useLazyCss(styles);
 
-  const [count, setCount] = useState(10);
+  const [count, setCount] = useState(parseUrl().count ?? 10);
 
-  const isRandomColor = useRef(false);
-  const isRgb = useRef(false);
-  const isDisco = useRef(false);
-  const isGlowing = useRef(false);
-  const delay = useRef(150);
-  const duration = useRef(5000);
+  const isRandomColor = useRef(parseUrl().isRandomColor ?? false);
+  const isDisco = useRef(parseUrl().isDisco ?? false);
+  const isGlowing = useRef(parseUrl().isGlowing ?? false);
+  const easing = useRef(parseUrl().easing ?? 'ease.inOut.quad');
+  const delay = useRef(parseUrl().delay ?? 150);
+  const duration = useRef(parseUrl().duration ?? 2000);
+  const isAnimation = useRef(parseUrl().isAnimation ?? true);
   const animations = useRef([]);
-  const animationRgb = useRef([]);
+  const isRgb = useRef(parseUrl().isRgb ?? false);
+  const animationsRgb = useRef([]);
 
-  const createSSSSS = () => {
+  const createSSSSSs = () => {
     const result = [];
     for (let i = 0; i < count; i++) {
+      const color = generateColor();
       result.push(
         <circle
           className='SSSSS'
-          key={Math.random() * 100}
+          key={'SSSSS' + i}
           cx='50%'
           cy='50%'
           r={0}
           style={{
-            stroke: isRandomColor.current ? generateColor() : null,
+            stroke: isRandomColor.current ? color : null,
             filter:
               isGlowing.current && isRandomColor.current
-                ? `drop-shadow(0px 0px var(--glow-trength) ${generateColor()})`
+                ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
                 : isGlowing.current
                 ? `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`
                 : null,
@@ -47,38 +50,52 @@ export default function SSSSS() {
   const setupAnimation = () => {
     stop();
     animations.current = [];
-    animationRgb.current = [];
+    animationsRgb.current = [];
 
     const SSSSSs = document.querySelectorAll('.SSSSS');
+    let getEase = easing.current.split('.');
+    getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
     for (let i = 0; i < SSSSSs.length; i++) {
       const e = SSSSSs[i];
 
-      const callback = ([r], { pause }) => {
-        if (!document.body.contains(e)) pause();
-        e.setAttribute('r', r + '%');
-      };
+      // const length = e.getTotalLength();
+      // e.style.strokeDasharray = length / 3 + 'px';
 
-      animations.current.push(
-        animare({ to: 100, duration: duration.current, delay: i * delay.current, repeat: -1, autoPlay: false }, callback)
-      );
+      if (isAnimation.current) {
+        const callback = ([r], { pause, progress, setOptions }) => {
+          if (!document.body.contains(e)) pause();
+          e.setAttribute('r', r + '%');
+          // e.style.strokeDashoffset = o + 'px';
+          if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
+        };
+
+        const a = animare(
+          { to: 100, duration: duration.current, delay: i * delay.current, repeat: -1, autoPlay: false, ease: getEase },
+          callback
+        );
+        // .next({ from: -length, to: 0 });
+        // a.setTimelineOptions({ repeat: -1 });
+        animations.current.push(a);
+      }
 
       if (isRgb.current) {
-        const callback_color = ([r, g, b], { pause }) => {
-          if (!document.contains(e)) pause();
+        const callback_color = ([r, g, b], { pause, progress, setOptions }) => {
+          if (!document.body.contains(e)) pause();
           e.style.stroke = `rgb(${r},${g},${b})`;
           isGlowing.current
             ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
             : e.style.removeProperty('filter');
+          if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
         };
-        const b = animare(
+        const a_rgb = animare(
           { from: [255, 0, 0], to: [0, 0, 255], duration: 2000, delay: i * delay.current, autoPlay: false },
           callback_color
         )
           .next({ to: [0, 255, 0] })
           .next({ to: [255, 0, 0] });
-        b.setTimelineOptions({ repeat: -1 });
-        animationRgb.current.push(b);
+        a_rgb.setTimelineOptions({ repeat: -1 });
+        animationsRgb.current.push(a_rgb);
       }
     }
     play();
@@ -99,16 +116,18 @@ export default function SSSSS() {
   };
 
   const play = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i].play();
-      animationRgb.current?.[i]?.play();
+    for (let i = 0; i < count; i++) {
+      animations.current[i]?.setOptions({ delay: i * delay.current });
+      animationsRgb.current[i]?.setOptions({ delay: i * delay.current });
+      animations.current[i]?.play();
+      animationsRgb.current?.[i]?.play();
     }
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i].stop();
-      animationRgb.current?.[i]?.stop();
+    for (let i = 0; i < count; i++) {
+      animations.current[i]?.stop(0);
+      animationsRgb.current?.[i]?.stop(0);
     }
   };
 
@@ -118,6 +137,13 @@ export default function SSSSS() {
   }, [count]);
 
   useEffect(() => {
+    const params = parseUrl();
+    if (params.strokeColor) document.body.style.setProperty('--stroke-color', '#' + params.strokeColor);
+    if (params.strokeWidth) document.body.style.setProperty('--stroke-width', params.strokeWidth + 'px');
+    if (params.glowStrength) document.body.style.setProperty('--glow-trength', params.glowStrength + 'px');
+    if (params.backgroundColor) onBgColorChange('#' + params.backgroundColor);
+    if (params.zoom) onZoomChange(params.zoom);
+
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
 
@@ -128,15 +154,19 @@ export default function SSSSS() {
   }, []);
 
   const onCountChange = e => {
-    setCount(+e.target.value);
+    const value = +e.target.value > +e.target.max ? +e.target.max : +e.target.value;
+    setCount(value);
+    addUrlQuery({ count: value });
   };
 
   const onStrokeWidthChange = e => {
     document.body.style.setProperty('--stroke-width', e.target.value);
+    addUrlQuery({ strokeWidth: +e.target.value });
   };
 
   const onDurationChange = e => {
     duration.current = +e.target.value;
+    addUrlQuery({ duration: +e.target.value });
     for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.setOptions({ duration: duration.current });
     }
@@ -144,13 +174,28 @@ export default function SSSSS() {
 
   const onDelayChange = e => {
     delay.current = +e.target.value;
+    addUrlQuery({ delay: +e.target.value });
     setupAnimation();
+  };
+
+  const onEaseChange = e => {
+    easing.current = e.target.value;
+    addUrlQuery({ easing: e.target.value });
+    setupAnimation();
+  };
+
+  const onZoomChange = e => {
+    document.querySelector('.SSSSS-svg').style.height = (e?.target?.value ?? e) + '%';
+    document.querySelector('.SSSSS-svg').style.width = (e?.target?.value ?? e) + '%';
+    if (e?.target?.value) addUrlQuery({ zoom: +e.target.value });
   };
 
   const onRGBChange = async e => {
     isRgb.current = e.target.checked;
+    addUrlQuery({ isRgb: isRgb.current });
     document.getElementById('random-check').disabled = isRgb.current;
     document.getElementById('disco-check').disabled = isRgb.current;
+    document.getElementById('color-input').disabled = isRgb.current;
 
     if (isRgb.current) {
       document.querySelectorAll('.SSSSS').forEach(e => {
@@ -159,9 +204,9 @@ export default function SSSSS() {
       });
       setupAnimation();
     } else {
-      animationRgb.current.forEach(a => a.stop(0));
-      animationRgb.current = [];
-      await new Promise(resolve => setTimeout(resolve, 100));
+      animationsRgb.current.forEach(a => a.stop(0));
+      animationsRgb.current = [];
+      await sleep(100);
       document.querySelectorAll('.SSSSS').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
@@ -177,11 +222,13 @@ export default function SSSSS() {
 
   const onDiscoChange = e => {
     isDisco.current = e.target.checked;
+    addUrlQuery({ isDisco: isDisco.current });
     document.getElementById('random-check').disabled = isDisco.current;
     document.getElementById('rgb-check').disabled = isDisco.current;
+    document.getElementById('color-input').disabled = isDisco.current;
 
     if (isDisco.current) {
-      if (isRgb.current) animationRgb.current.forEach(a => a.pause());
+      if (isRgb.current) animationsRgb.current.forEach(a => a.pause());
       disco();
     } else {
       if (isRgb.current) setupAnimation();
@@ -200,8 +247,11 @@ export default function SSSSS() {
     }
   };
 
-  const onGlowChange = async e => {
+  const onGlowChange = e => {
     isGlowing.current = e.target.checked;
+    addUrlQuery({ isGlowing: isGlowing.current });
+    document.getElementById('glow-input').disabled = !isGlowing.current;
+
     if (isGlowing.current) {
       if (isRgb.current) return;
       if (isRandomColor.current) {
@@ -223,8 +273,20 @@ export default function SSSSS() {
     }
   };
 
+  const onGlowStrengthChange = e => {
+    document.body.style.setProperty('--glow-trength', e.target.value + 'px');
+    addUrlQuery({ glowStrength: e.target.value });
+  };
+
   const onRandomColorChange = e => {
     isRandomColor.current = e.target.checked;
+
+    addUrlQuery({ isRandomColor: e.target.checked });
+
+    document.getElementById('color-input').disabled = isRandomColor.current;
+    document.getElementById('rgb-check').disabled = isRandomColor.current;
+    document.getElementById('disco-check').disabled = isRandomColor.current;
+
     document.querySelectorAll('.SSSSS').forEach(e => {
       if (isRandomColor.current) {
         const color = generateColor();
@@ -239,10 +301,12 @@ export default function SSSSS() {
 
   const onColorChange = e => {
     document.body.style.setProperty('--stroke-color', e.target.value);
+    addUrlQuery({ strokeColor: e.target.value.replace('#', '') });
   };
 
   const onBgColorChange = e => {
-    document.body.style.backgroundColor = e.target.value;
+    document.body.style.backgroundColor = e?.target?.value ?? e;
+    if (e?.target?.value) addUrlQuery({ backgroundColor: e.target.value.replace('#', '') });
     const inverted = invertColor(getComputedStyle(document.body).backgroundColor);
     [...document.getElementsByClassName('labels')].forEach(el => (el.style.color = inverted));
     document.querySelector('.toggle-pannel-arrow').style.fill = inverted;
@@ -269,26 +333,25 @@ export default function SSSSS() {
       </svg>
 
       <div className='container'>
-        <svg width='100%' height='100%' viewBox='0 0 500 500' fill='none'>
-          {createSSSSS()}
-          <circle cx='50%' cy='50%' r='1' />
+        <svg className='SSSSS-svg' viewBox='0 0 500 500'>
+          {createSSSSSs()}
         </svg>
 
         <div className='controls'>
           <label className='labels' htmlFor='SSSSS-count'>
-            SSSSS Counts:
+            SSSSSs Count:
           </label>
-          <input className='inputs' type='number' min={1} name='SSSSS-count' value={count} onChange={onCountChange} />
+          <input className='inputs' type='number' min={1} max={100} name='SSSSS-count' value={count} onChange={onCountChange} />
 
-          <label className='labels' htmlFor='orbit-stroke-width'>
+          <label className='labels' htmlFor='SSSSS-stroke-width'>
             Stroke width:
           </label>
           <input
             className='inputs'
             type='number'
             min={1}
-            name='orbit-stroke-width'
-            defaultValue='1'
+            name='SSSSS-stroke-width'
+            defaultValue={parseUrl().strokeWidth ?? 1}
             onChange={onStrokeWidthChange}
           />
 
@@ -318,47 +381,140 @@ export default function SSSSS() {
             onChange={onDelayChange}
           />
 
-          <br />
-          <input className='inputs' id='rgb-check' type='checkbox' name='RGB-Mode' onChange={onRGBChange} />
+          <label className='labels' htmlFor='ease-select'>
+            Ease:
+          </label>
+          <select className='select' name='ease-select' defaultValue={easing.current} onChange={onEaseChange}>
+            <optgroup />
+            <option value='linear'>- linear</option>
+            <optgroup />
+            {Object.keys(ease.in).map(e => (
+              <option key={`ease.in.${e}`} value={`ease.in.${e}`}>{`- in ${e}`}</option>
+            ))}
+            <optgroup />
+            {Object.keys(ease.out).map(e => (
+              <option key={`ease.out.${e}`} value={`ease.out.${e}`}>{`- out ${e}`}</option>
+            ))}
+            <optgroup />
+            {Object.keys(ease.inOut).map(e => (
+              <option key={`ease.inOut.${e}`} value={`ease.inOut.${e}`}>{`- inOut ${e}`}</option>
+            ))}
+            <optgroup />
+          </select>
+
+          <label className='labels' htmlFor='zoom'>
+            Zoom:
+          </label>
+          <input
+            className='inputs'
+            type='range'
+            min='5'
+            max='150'
+            name='zoom'
+            defaultValue={parseUrl().zoom ?? 100}
+            onChange={onZoomChange}
+          />
+
+          <input
+            className='inputs'
+            id='rgb-check'
+            type='checkbox'
+            name='RGB-Mode'
+            defaultChecked={isRgb.current}
+            disabled={isDisco.current || isRandomColor.current}
+            onChange={onRGBChange}
+          />
           <label className='labels' htmlFor='RGB-Mode'>
             {' '}
-            RGB Mode
+            RGB
           </label>
 
           <br />
-          <input className='inputs' id='disco-check' type='checkbox' name='Disco-Mode' onChange={onDiscoChange} />
+          <input
+            className='inputs'
+            id='disco-check'
+            type='checkbox'
+            name='Disco-Mode'
+            defaultChecked={isDisco.current}
+            disabled={isRgb.current || isRandomColor.current}
+            onChange={onDiscoChange}
+          />
           <label className='labels' htmlFor='Disco-Mode'>
             {' '}
-            Disco Mode
+            Disco
           </label>
 
           <br />
-          <input className='inputs' id='glow-check' type='checkbox' name='Glow-Mode' onChange={onGlowChange} />
-          <label className='labels' htmlFor='Glow-Mode'>
-            {' '}
-            Glow
-          </label>
-
-          <br />
-          <input className='inputs' id='random-check' type='checkbox' name='randomColor' onChange={onRandomColorChange} />
+          <input
+            className='inputs'
+            id='random-check'
+            type='checkbox'
+            name='randomColor'
+            defaultChecked={isRandomColor.current}
+            disabled={isDisco.current || isRgb.current}
+            onChange={onRandomColorChange}
+          />
           <label className='labels' htmlFor='randomColor'>
             {' '}
             Random Colors
           </label>
 
           <br />
-          <label className='labels' htmlFor='color'>
-            Stroke Color:
+          <input
+            className='inputs'
+            id='glow-check'
+            type='checkbox'
+            name='Glow-Mode'
+            defaultChecked={isGlowing.current}
+            onChange={onGlowChange}
+          />
+          <label className='labels' htmlFor='Glow-Mode'>
+            {' '}
+            Glow
           </label>
-          <br />
-          <input className='inputs' type='color' name='color' defaultValue='#ffffff' onChange={onColorChange} />
 
           <br />
-          <label className='labels' htmlFor='bg-color'>
-            Background Color:
+          <label className='labels' htmlFor='glow-strength'>
+            Glow strength:
           </label>
+          <input
+            className='inputs'
+            id='glow-input'
+            step='0.5'
+            type='number'
+            name='glow-strength'
+            min='0.5'
+            defaultValue={parseUrl().glowStrength ?? 2}
+            onChange={onGlowStrengthChange}
+            disabled={!isGlowing.current}
+          />
+
+          <input
+            className='inputs'
+            id='color-input'
+            type='color'
+            name='color'
+            defaultValue={'#' + (parseUrl()?.strokeColor ?? 'ffffff')}
+            disabled={isRandomColor.current || isDisco.current || isRgb.current}
+            onChange={onColorChange}
+          />
+          <label className='labels' htmlFor='color'>
+            Stroke Color
+          </label>
+
           <br />
-          <input className='inputs' type='color' name='bg-color' onChange={onBgColorChange} />
+          <br />
+
+          <input
+            className='inputs'
+            type='color'
+            name='bg-color'
+            defaultValue={'#' + (parseUrl()?.backgroundColor ?? '000000')}
+            onChange={onBgColorChange}
+          />
+          <label className='labels' htmlFor='bg-color'>
+            Background Color
+          </label>
         </div>
       </div>
     </>

@@ -2,55 +2,55 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { addUrlQuery, parseUrl, sleep, useLazyCss } from '..';
-import styles from './Trinity.lazy.css';
+import { addUrlQuery, parseUrl, useLazyCss } from '..';
+import styles from './MultiSidedPolygon.lazy.css';
 
-export default function Trinity() {
+export default function MultiSidedPolygon() {
   useLazyCss(styles);
 
-  const [count, setCount] = useState(parseUrl().count ?? 10);
+  const [count, setCount] = useState(parseUrl().count ?? 20);
+  const [sides, setSides] = useState(parseUrl().sides ?? 6);
 
   const isRandomColor = useRef(parseUrl().isRandomColor ?? false);
+  const isRgb = useRef(parseUrl().isRgb ?? false);
   const isDisco = useRef(parseUrl().isDisco ?? false);
   const isGlowing = useRef(parseUrl().isGlowing ?? false);
   const easing = useRef(parseUrl().easing ?? 'ease.inOut.quad');
-  const delay = useRef(parseUrl().delay ?? 150);
-  const duration = useRef(parseUrl().duration ?? 4000);
-  const isAnimation = useRef(parseUrl().isAnimation ?? true);
+  const delay = useRef(parseUrl().delay ?? 20);
+  const duration = useRef(parseUrl().duration ?? 3000);
+  const isRotating = useRef(parseUrl().isRotating ?? true);
   const animations = useRef([]);
-  const isRotating = useRef(parseUrl().isRotating ?? false);
-  const animationsRotate = useRef(null);
-  const isRgb = useRef(parseUrl().isRgb ?? false);
+  const isDash = useRef(parseUrl().isDash ?? false);
+  const animationsDash = useRef([]);
   const animationsRgb = useRef([]);
 
-  const createTrinitys = () => {
-    const smallest = 0.5;
-    const largest = 1.2;
+  const createMultiSidedPolygons = () => {
     const result = [];
-    for (let i = 0; i < count; i++) {
-      const calc = ((smallest + 1) / count) * (i + 1);
-      const x = 62.44 * largest * (calc <= smallest ? (smallest - calc) * -1 : calc - smallest);
-      const y = 42.7 * largest * (calc <= smallest ? (smallest - calc) * -1 : calc - smallest);
+    const angle = 360 / sides;
 
-      const color = generateColor();
+    for (let i = 0; i < count; i++) {
+      const sideLength = (i + 1) * (245 / count);
+      const xy = [];
+      for (let point = 0; point < sides; point++) {
+        const x = +(250 + Math.cos((Math.PI * angle * point) / 180) * sideLength).toFixed(2);
+        const y = +(250 + Math.sin((Math.PI * angle * point) / 180) * sideLength).toFixed(2);
+        xy.push(`${x} ${y}`);
+      }
+
       result.push(
         <path
-          className='Trinity'
-          key={'Trinity' + i}
-          d={`M${422.56 + x},${398.39 + y}c${-35.72 + x / 2},${-184.08 - y * 2.9},${-309.44 - x * 2.5},${-183.99 - y * 2.9},${
-            -345.12 - x * 2
-          },${0}c${177.29 + x * 1.6},${61.08 + y * 2.15},${314.04 + x * 2.9},${-176 - y * 2},${172.57 + x},${
-            -298.92 - y * 2.53
-          }C${108.46 - x * 2},${222.44 - y * 0.8},${245.37 - x * 0.45},${459.46 + y * 3.1},${422.56 + x},${398.39 + y}z`}
+          className='MultiSidedPolygon'
+          key={'MultiSidedPolygon' + i}
           style={{
-            stroke: isRandomColor.current ? color : null,
+            stroke: isRandomColor.current ? generateColor() : null,
             filter:
               isGlowing.current && isRandomColor.current
-                ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
+                ? `drop-shadow(0px 0px var(--glow-trength) ${generateColor()})`
                 : isGlowing.current
                 ? `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`
                 : null,
           }}
+          d={`M ${xy.join(' L ')} Z`}
         />
       );
     }
@@ -61,38 +61,62 @@ export default function Trinity() {
     stop();
     animations.current = [];
     animationsRgb.current = [];
+    animationsDash.current = [];
 
-    const Trinitys = document.querySelectorAll('.Trinity');
-    const svg = document.querySelector('.Trinity-svg');
-
+    const MultiSidedPolygons = document.querySelectorAll('.MultiSidedPolygon');
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
-    if (!animationsRotate.current) {
-      animationsRotate.current = animare({ to: 360, duration: 20000, repeat: -1, autoPlay: isRotating.current }, ([r]) => {
-        svg.style.transform = `translate(0%, -10%) rotate(${r}deg)`;
-      });
-    }
+    for (let i = 0; i < MultiSidedPolygons.length; i++) {
+      const e = MultiSidedPolygons[i];
 
-    for (let i = 0; i < Trinitys.length; i++) {
-      const e = Trinitys[i];
+      if (isRotating.current) {
+        const callback = ([r], { pause, progress, setOptions }) => {
+          if (!document.body.contains(e)) pause();
+          e.style.transform = `rotate(${r}deg)`;
+          // reset delay
+          if (progress === 100) {
+            setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
+          }
+        };
 
-      const length = e.getTotalLength();
-      e.style.strokeDasharray = length / 3 + 'px';
+        const a_rotate = animare(
+          {
+            to: 360,
+            duration: duration.current,
+            delay: i * delay.current,
+            repeat: -1,
+            autoPlay: false,
+            ease: getEase,
+          },
+          callback
+        );
+        animations.current.push(a_rotate);
+      }
 
-      if (isAnimation.current) {
-        const callback = ([o], { pause, progress, setOptions }) => {
+      if (isDash.current) {
+        const length = e.getTotalLength();
+        e.style.strokeDasharray = length / sides + 'px';
+
+        const callback_dash = ([o], { pause, progress, setOptions }) => {
           if (!document.body.contains(e)) pause();
           e.style.strokeDashoffset = o + 'px';
           // if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
         };
 
-        const a = animare(
-          { to: length, duration: duration.current, delay: i * delay.current, autoPlay: false, ease: getEase },
-          callback
+        const a_dash = animare(
+          {
+            from: 0,
+            to: length,
+            duration: duration.current,
+            delay: i * delay.current,
+            autoPlay: false,
+            ease: getEase,
+          },
+          callback_dash
         ).next({ from: -length, to: 0 });
-        a.setTimelineOptions({ repeat: -1 });
-        animations.current.push(a);
+        a_dash.setTimelineOptions({ repeat: -1 });
+        animationsDash.current.push(a_dash);
       }
 
       if (isRgb.current) {
@@ -102,10 +126,12 @@ export default function Trinity() {
           isGlowing.current
             ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
             : e.style.removeProperty('filter');
-          if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
+          if (progress === 100) {
+            setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
+          }
         };
         const a_rgb = animare(
-          { from: [255, 0, 0], to: [0, 0, 255], duration: 4000, delay: i * delay.current, autoPlay: false },
+          { from: [255, 0, 0], to: [0, 0, 255], duration: 2000, delay: i * delay.current, autoPlay: false },
           callback_color
         )
           .next({ to: [0, 255, 0] })
@@ -118,12 +144,12 @@ export default function Trinity() {
   };
 
   const disco = async () => {
-    const Trinitys = document.querySelectorAll('.Trinity');
+    const MultiSidedPolygons = document.querySelectorAll('.MultiSidedPolygon');
     while (isDisco.current) {
       await new Promise(resolve => setTimeout(resolve, 500));
       if (!isDisco.current) return;
-      for (let i = 0; i < Trinitys.length; i++) {
-        const e = Trinitys[i];
+      for (let i = 0; i < MultiSidedPolygons.length; i++) {
+        const e = MultiSidedPolygons[i];
         const color = generateColor();
         e.style.stroke = color;
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
@@ -135,8 +161,11 @@ export default function Trinity() {
     for (let i = 0; i < count; i++) {
       animations.current[i]?.setOptions({ delay: i * delay.current });
       animationsRgb.current[i]?.setOptions({ delay: i * delay.current });
-      animations.current[i].play();
+      animationsDash.current[i]?.setOptions({ delay: i * delay.current });
+
+      animations.current[i]?.play();
       animationsRgb.current?.[i]?.play();
+      animationsDash.current?.[i]?.play();
     }
   };
 
@@ -144,13 +173,14 @@ export default function Trinity() {
     for (let i = 0; i < count; i++) {
       animations.current[i]?.stop(0);
       animationsRgb.current?.[i]?.stop(0);
+      animationsDash.current?.[i]?.stop(0);
     }
   };
 
   useEffect(() => {
     setupAnimation();
     if (isDisco.current) disco();
-  }, [count]);
+  }, [count, sides]);
 
   useEffect(() => {
     const params = parseUrl();
@@ -175,6 +205,11 @@ export default function Trinity() {
     addUrlQuery({ count: value });
   };
 
+  const onSidesChange = e => {
+    setSides(+e.target.value);
+    addUrlQuery({ sides: +e.target.value });
+  };
+
   const onStrokeWidthChange = e => {
     document.body.style.setProperty('--stroke-width', e.target.value);
     addUrlQuery({ strokeWidth: +e.target.value });
@@ -183,8 +218,9 @@ export default function Trinity() {
   const onDurationChange = e => {
     duration.current = +e.target.value;
     addUrlQuery({ duration: +e.target.value });
-    for (let i = 0; i < animations.current.length; i++) {
+    for (let i = 0; i < count; i++) {
       animations.current[i]?.setOptions({ duration: duration.current });
+      animationsDash.current[i]?.setOptions({ duration: duration.current });
     }
   };
 
@@ -201,21 +237,30 @@ export default function Trinity() {
   };
 
   const onZoomChange = e => {
-    document.querySelector('.Trinity-svg').style.height = (e?.target?.value ?? e) + '%';
-    document.querySelector('.Trinity-svg').style.width = (e?.target?.value ?? e) + '%';
+    document.querySelector('.MultiSidedPolygon-svg').style.height = (e?.target?.value ?? e) + '%';
+    document.querySelector('.MultiSidedPolygon-svg').style.width = (e?.target?.value ?? e) + '%';
     if (e?.target?.value) addUrlQuery({ zoom: +e.target.value });
   };
 
-  const onRotateChange = async e => {
+  const onDashChange = e => {
+    isDash.current = e.target.checked;
+    addUrlQuery({ isDash: e.target.checked });
+    if (!isDash.current) {
+      animationsDash.current.forEach(a => a.stop(0));
+      animationsDash.current = [];
+      document.querySelectorAll('.MultiSidedPolygon').forEach(e => {
+        e.style.removeProperty('stroke-dasharray');
+      });
+    } else setupAnimation();
+  };
+
+  const onRotateChange = e => {
     isRotating.current = e.target.checked;
     addUrlQuery({ isRotating: e.target.checked });
-    if (isRotating.current) {
-      animationsRotate.current?.play();
-    } else {
-      animationsRotate.current?.stop(0);
-      await sleep(50);
-      document.querySelector('.Trinity-svg').style.removeProperty('transform');
-    }
+    if (!isRotating.current) {
+      animations.current.forEach(a => a.stop(0));
+      animations.current = [];
+    } else setupAnimation();
   };
 
   const onRGBChange = async e => {
@@ -226,7 +271,7 @@ export default function Trinity() {
     document.getElementById('color-input').disabled = isRgb.current;
 
     if (isRgb.current) {
-      document.querySelectorAll('.Trinity').forEach(e => {
+      document.querySelectorAll('.MultiSidedPolygon').forEach(e => {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
@@ -235,7 +280,7 @@ export default function Trinity() {
       animationsRgb.current.forEach(a => a.stop(0));
       animationsRgb.current = [];
       await new Promise(resolve => setTimeout(resolve, 100));
-      document.querySelectorAll('.Trinity').forEach(e => {
+      document.querySelectorAll('.MultiSidedPolygon').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
           e.style.stroke = color;
@@ -260,7 +305,7 @@ export default function Trinity() {
       disco();
     } else {
       if (isRgb.current) setupAnimation();
-      document.querySelectorAll('.Trinity').forEach(e => {
+      document.querySelectorAll('.MultiSidedPolygon').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
           e.style.stroke = color;
@@ -283,7 +328,7 @@ export default function Trinity() {
     if (isGlowing.current) {
       if (isRgb.current) return;
       if (isRandomColor.current) {
-        document.querySelectorAll('.Trinity').forEach(e => {
+        document.querySelectorAll('.MultiSidedPolygon').forEach(e => {
           const color = generateColor();
           e.style.stroke = color;
           e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
@@ -291,11 +336,11 @@ export default function Trinity() {
         return;
       }
 
-      document.querySelectorAll('.Trinity').forEach(e => {
+      document.querySelectorAll('.MultiSidedPolygon').forEach(e => {
         e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
       });
     } else {
-      document.querySelectorAll('.Trinity').forEach(e => {
+      document.querySelectorAll('.MultiSidedPolygon').forEach(e => {
         e.style.removeProperty('filter');
       });
     }
@@ -308,14 +353,12 @@ export default function Trinity() {
 
   const onRandomColorChange = e => {
     isRandomColor.current = e.target.checked;
-
     addUrlQuery({ isRandomColor: e.target.checked });
-
     document.getElementById('color-input').disabled = isRandomColor.current;
     document.getElementById('rgb-check').disabled = isRandomColor.current;
     document.getElementById('disco-check').disabled = isRandomColor.current;
 
-    document.querySelectorAll('.Trinity').forEach(e => {
+    document.querySelectorAll('.MultiSidedPolygon').forEach(e => {
       if (isRandomColor.current) {
         const color = generateColor();
         e.style.stroke = color;
@@ -361,24 +404,29 @@ export default function Trinity() {
       </svg>
 
       <div className='container'>
-        <svg className='Trinity-svg' viewBox='0 0 500 500'>
-          {createTrinitys()}
+        <svg className='MultiSidedPolygon-svg' viewBox='0 0 500 500'>
+          {createMultiSidedPolygons()}
         </svg>
 
         <div className='controls'>
-          <label className='labels' htmlFor='Trinity-count'>
-            Trinitys Count:
+          <label className='labels' htmlFor='MultiSidedPolygon-count'>
+            Polygons Count:
           </label>
-          <input className='inputs' type='number' min={1} max={100} name='Trinity-count' value={count} onChange={onCountChange} />
+          <input className='inputs' type='number' min={1} max={500} name='MultiSidedPolygon-count' value={count} onChange={onCountChange} />
 
-          <label className='labels' htmlFor='Trinity-stroke-width'>
+          <label className='labels' htmlFor='MultiSidedPolygon-sides'>
+            Sides Count:
+          </label>
+          <input className='inputs' type='number' min={3} name='MultiSidedPolygon-sides' value={sides} onChange={onSidesChange} />
+
+          <label className='labels' htmlFor='MultiSidedPolygon-stroke-width'>
             Stroke width:
           </label>
           <input
             className='inputs'
             type='number'
             min={1}
-            name='Trinity-stroke-width'
+            name='MultiSidedPolygon-stroke-width'
             defaultValue={parseUrl().strokeWidth ?? 1}
             onChange={onStrokeWidthChange}
           />
@@ -439,9 +487,16 @@ export default function Trinity() {
             min='5'
             max='150'
             name='zoom'
-            defaultValue={parseUrl().zoom ?? 90}
+            defaultValue={parseUrl().zoom ?? 100}
             onChange={onZoomChange}
           />
+
+          <input className='inputs' type='checkbox' name='dashes-Mode' defaultChecked={isDash.current} onChange={onDashChange} />
+          <label className='labels' htmlFor='dashes-Mode'>
+            {' '}
+            Dashes
+          </label>
+          <br />
 
           <input
             className='inputs'
@@ -469,8 +524,8 @@ export default function Trinity() {
             {' '}
             RGB
           </label>
-
           <br />
+
           <input
             className='inputs'
             id='disco-check'
@@ -484,8 +539,8 @@ export default function Trinity() {
             {' '}
             Disco
           </label>
-
           <br />
+
           <input
             className='inputs'
             id='random-check'
@@ -499,8 +554,8 @@ export default function Trinity() {
             {' '}
             Random Colors
           </label>
-
           <br />
+
           <input
             className='inputs'
             id='glow-check'
@@ -525,7 +580,7 @@ export default function Trinity() {
             type='number'
             name='glow-strength'
             min='0.5'
-            defaultValue={parseUrl().glowStrength ?? 2}
+            defaultValue={parseUrl().glowStrength ?? 1}
             onChange={onGlowStrengthChange}
             disabled={!isGlowing.current}
           />
@@ -542,7 +597,6 @@ export default function Trinity() {
           <label className='labels' htmlFor='color'>
             Stroke Color
           </label>
-
           <br />
           <br />
 

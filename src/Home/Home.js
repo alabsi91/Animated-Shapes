@@ -6,11 +6,12 @@ export default function Home() {
   useLazyCss(styles);
 
   useEffect(() => {
-    document.body.style.removeProperty('background-color');
+    document.body.removeAttribute('style');
   }, []);
 
   return (
     <div className='container'>
+      <Card path='MultiSidedPolygon' />
       <Card path='Trinity' />
       <Card path='SwirlingLines' />
       <Card path='Cuboid' />

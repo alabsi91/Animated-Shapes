@@ -79,3 +79,32 @@ ReactDOM.render(
   </StrictMode>,
   document.getElementById('root')
 );
+
+export const parseUrl = () => {
+  const regex = /[?&]([^=#]+)=([^&#]*)/g;
+  const url = window.location.href;
+  const params = {};
+  const match = url.match(regex);
+  match?.forEach(m => {
+    const q = m.replace(/[?&]/, '');
+    const [key, value] = q.split('=');
+    params[key] = /^[1-9]\d+$|true|false/g.test(value) ? JSON.parse(value) : value;
+  });
+  return params;
+};
+
+export const addUrlQuery = obj => {
+  const url = window.location.href;
+  const params = parseUrl();
+  const query = Object.keys(obj);
+  let newUrl;
+  query.forEach(key => {
+    newUrl =
+      params[key] !== undefined
+        ? url.replace(`${key}=${params[key]}`, `${key}=${obj[key]}`)
+        : `${url}${url.indexOf('?') === -1 ? '?' : '&'}${key}=${obj[key]}`;
+  });
+  window.history.replaceState({}, '', newUrl);
+};
+
+export const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));

@@ -11,7 +11,7 @@ export default function Heart() {
   const easingY = x => 13 * Math.cos(x * 6.2) - 5 * Math.cos(2 * x * 6.2) - 2 * Math.cos(3 * x * 6.2) - Math.cos(4 * x * 6.2);
 
   const draw = () => {
-    const canvas = document.querySelector(`.${styles.canvas}`);
+    const canvas = document.querySelector('.canvas');
     const ctx = canvas.getContext('2d');
     const { width, height } = canvas;
     const centerX = width / 2;

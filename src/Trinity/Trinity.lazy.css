@@ -1,32 +1,31 @@
 body {
-  --stroke-width: 2px;
-  --stroke-color: white;
+  --stroke-color: #fff;
+  --stroke-width: 1px;
+  --glow-trength: 2px;
+}
+
+.Trinity-svg {
+  width: 90%;
+  height: 90%;
+  fill: none;
+  transform-origin: 50% 60%;
+  pointer-events: none;
+}
+
+.Trinity {
+  stroke: var(--stroke-color);
+  stroke-width: var(--stroke-width);
+  fill: none;
+  stroke-linecap: round;
 }
 
 .container {
-  position: relative;
   width: 100vw;
   height: 100vh;
-  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   overflow: hidden;
-}
-
-.trinity {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  transform-origin: 50% 60%;
-  aspect-ratio: 1 / 1;
-  height: 85%;
-}
-
-.trinity path {
-  fill: none;
-  stroke: var(--stroke-color);
-  stroke-width: var(--stroke-width);
-  stroke-linecap: round;
-  transition: stroke 250ms;
 }
 
 .toggle-pannel-arrow {
@@ -39,7 +38,6 @@ body {
   transform-origin: center;
   cursor: pointer;
 }
-
 .controls {
   position: fixed;
   left: 0;
@@ -48,17 +46,65 @@ body {
   height: calc(100vh - 70px);
   overflow-x: hidden;
 }
+.select {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  padding: 2px 1px;
+  font-size: 14px;
+  font-family: 'Courier New', Courier, monospace;
+  text-transform: capitalize;
+}
 .inputs {
   display: block;
   margin-top: 5px;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  font-family: 'Courier New', Courier, monospace;
 }
 .inputs[type='checkbox'] {
   display: inline-block;
 }
+.inputs[type='number'] {
+  width: 80%;
+}
+.inputs[type='range'],
+.select {
+  width: 85%;
+}
 .inputs[type='color'] {
+  appearance: none;
   display: inline-block;
+  margin: 0px;
   margin-right: 10px;
+  background: none;
+  border: 0;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.inputs[type='color']:disabled {
+  cursor: not-allowed;
+}
+.inputs[type='color']:disabled + .labels {
+  opacity: 0.5;
+}
+::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 50%;
+}
+::-webkit-color-swatch {
+  border-radius: 50%;
+}
+::-moz-color-swatch,
+::-moz-focus-inner {
+  border-radius: 50%;
+}
+::-moz-focus-inner {
+  padding: 0;
+  border-radius: 50%;
 }
 .labels {
   color: white;

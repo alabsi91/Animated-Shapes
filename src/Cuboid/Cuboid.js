@@ -20,7 +20,7 @@ export default function Cuboid() {
     const result = [];
 
     for (let i = -((count - 1) / 2); i <= (count - 1) / 2; i++) {
-      const pos = (i * window.innerHeight) / count / 1.2;
+      const pos = (i * (window.innerHeight - 50)) / count / 1.2;
       const color1 = generateColor();
       const color2 = generateColor();
 
