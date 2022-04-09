@@ -405,12 +405,11 @@ export default function Eye() {
           <input
             className='inputs'
             type='number'
-            onInput={onCountChange}
             min={1}
             max={100}
             name='Eye-count'
             value={count}
-            // onChange={onCountChange}
+            onChange={onCountChange}
           />
 
           <label className='labels' htmlFor='Eye-stroke-width'>

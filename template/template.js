@@ -20,6 +20,8 @@ export default function SSSSS() {
   const animations = useRef([]);
   const isRgb = useRef(parseUrl().isRgb ?? false);
   const animationsRgb = useRef([]);
+  const isDash = useRef(parseUrl().isDash ?? false);
+  const animationsDash = useRef([]);
   const timer = useRef(null);
 
   const createSSSSSs = () => {
@@ -56,14 +58,10 @@ export default function SSSSS() {
     for (let i = 0; i < SSSSSs.length; i++) {
       const e = SSSSSs[i];
 
-      // const length = e.getTotalLength();
-      // e.style.strokeDasharray = length / 3 + 'px';
-
       if (isAnimation.current) {
         const callback = ([r], { pause, progress, setOptions }) => {
           if (!document.body.contains(e)) pause();
           e.setAttribute('r', r + '%');
-          // e.style.strokeDashoffset = o + 'px';
           if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
         };
 
@@ -71,9 +69,30 @@ export default function SSSSS() {
           { to: 100, duration: duration.current, delay: i * delay.current, repeat: -1, autoPlay: false, ease: getEase },
           callback
         );
-        // .next({ from: -length, to: 0 });
-        // a.setTimelineOptions({ repeat: -1 });
         animations.current.push(a);
+      }
+
+      if (isDash.current) {
+        const length = e.getTotalLength();
+        e.style.strokeDasharray = length / 3 + 'px';
+
+        const callback = ([o], { pause }) => {
+          if (!document.body.contains(e)) pause();
+          e.style.strokeDashoffset = o + 'px';
+        };
+
+        const a_dash = animare(
+          {
+            to: length,
+            duration: duration.current,
+            delay: i * delay.current,
+            autoPlay: false,
+            ease: getEase,
+          },
+          callback
+        ).next({ from: -length, to: 0 });
+        a_dash.setTimelineOptions({ repeat: -1 });
+        animationsDash.current.push(a_dash);
       }
 
       if (isRgb.current) {
@@ -102,7 +121,7 @@ export default function SSSSS() {
     stop();
     animations.current = [];
     animationsRgb.current = [];
-    // animationsDash.current = [];
+    animationsDash.current = [];
     clearTimeout(timer.current);
     timer.current = setTimeout(createAnimations, 300);
   };
@@ -124,8 +143,10 @@ export default function SSSSS() {
   const play = () => {
     for (let i = 0; i < count; i++) {
       animations.current[i]?.setOptions({ delay: i * delay.current });
+      animationsDash.current[i]?.setOptions({ delay: i * delay.current });
       animationsRgb.current[i]?.setOptions({ delay: i * delay.current });
       animations.current[i]?.play();
+      animationsDash.current[i]?.play();
       animationsRgb.current?.[i]?.play();
     }
   };
@@ -133,6 +154,7 @@ export default function SSSSS() {
   const stop = () => {
     for (let i = 0; i < count; i++) {
       animations.current[i]?.stop(0);
+      animationsDash.current?.[i]?.stop(0);
       animationsRgb.current?.[i]?.stop(0);
     }
   };
@@ -194,6 +216,18 @@ export default function SSSSS() {
     document.querySelector('.SSSSS-svg').style.height = (e?.target?.value ?? e) + '%';
     document.querySelector('.SSSSS-svg').style.width = (e?.target?.value ?? e) + '%';
     if (e?.target?.value) addUrlQuery({ zoom: +e.target.value });
+  };
+
+  const onDashChange = e => {
+    isDash.current = e.target.checked;
+    addUrlQuery({ isDash: e.target.checked });
+    if (!isDash.current) {
+      animationsDash.current.forEach(a => a.stop(0));
+      animationsDash.current = [];
+      document.querySelectorAll('.SSSSS').forEach(e => {
+        e.style.removeProperty('stroke-dasharray');
+      });
+    } else setupAnimation();
   };
 
   const onRGBChange = async e => {
@@ -420,6 +454,13 @@ export default function SSSSS() {
             defaultValue={parseUrl().zoom ?? 95}
             onChange={onZoomChange}
           />
+
+          <input className='inputs' type='checkbox' name='dashes-Mode' defaultChecked={isDash.current} onChange={onDashChange} />
+          <label className='labels' htmlFor='dashes-Mode'>
+            {' '}
+            Dashes
+          </label>
+          <br />
 
           <input
             className='inputs'
