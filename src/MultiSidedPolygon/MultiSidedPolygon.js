@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { addUrlQuery, parseUrl, useLazyCss } from '..';
+import { addUrlQuery, parseUrl, sleep, useLazyCss } from '..';
 import styles from './MultiSidedPolygon.lazy.css';
 
 export default function MultiSidedPolygon() {
@@ -23,6 +23,7 @@ export default function MultiSidedPolygon() {
   const isDash = useRef(parseUrl().isDash ?? false);
   const animationsDash = useRef([]);
   const animationsRgb = useRef([]);
+  const timer = useRef(null);
 
   const createMultiSidedPolygons = () => {
     const result = [];
@@ -57,12 +58,7 @@ export default function MultiSidedPolygon() {
     return result;
   };
 
-  const setupAnimation = () => {
-    stop();
-    animations.current = [];
-    animationsRgb.current = [];
-    animationsDash.current = [];
-
+  const createAnimations = () => {
     const MultiSidedPolygons = document.querySelectorAll('.MultiSidedPolygon');
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
@@ -141,6 +137,15 @@ export default function MultiSidedPolygon() {
       }
     }
     play();
+  };
+
+  const setupAnimation = () => {
+    stop();
+    animations.current = [];
+    animationsRgb.current = [];
+    animationsDash.current = [];
+    clearTimeout(timer.current);
+    timer.current = setTimeout(createAnimations, 300);
   };
 
   const disco = async () => {
@@ -279,7 +284,7 @@ export default function MultiSidedPolygon() {
     } else {
       animationsRgb.current.forEach(a => a.stop(0));
       animationsRgb.current = [];
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await sleep(100);
       document.querySelectorAll('.MultiSidedPolygon').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
@@ -412,7 +417,15 @@ export default function MultiSidedPolygon() {
           <label className='labels' htmlFor='MultiSidedPolygon-count'>
             Polygons Count:
           </label>
-          <input className='inputs' type='number' min={1} max={500} name='MultiSidedPolygon-count' value={count} onChange={onCountChange} />
+          <input
+            className='inputs'
+            type='number'
+            min={1}
+            max={500}
+            name='MultiSidedPolygon-count'
+            value={count}
+            onChange={onCountChange}
+          />
 
           <label className='labels' htmlFor='MultiSidedPolygon-sides'>
             Sides Count:

@@ -22,6 +22,7 @@ export default function Trinity() {
   const animationsRotate = useRef(null);
   const isRgb = useRef(parseUrl().isRgb ?? false);
   const animationsRgb = useRef([]);
+  const timer = useRef(null);
 
   const createTrinitys = () => {
     const smallest = 0.5;
@@ -57,11 +58,7 @@ export default function Trinity() {
     return result;
   };
 
-  const setupAnimation = () => {
-    stop();
-    animations.current = [];
-    animationsRgb.current = [];
-
+  const createAnimations = () => {
     const Trinitys = document.querySelectorAll('.Trinity');
     const svg = document.querySelector('.Trinity-svg');
 
@@ -115,6 +112,14 @@ export default function Trinity() {
       }
     }
     play();
+  };
+
+  const setupAnimation = () => {
+    stop();
+    animations.current = [];
+    animationsRgb.current = [];
+    clearTimeout(timer.current);
+    timer.current = setTimeout(createAnimations, 300);
   };
 
   const disco = async () => {

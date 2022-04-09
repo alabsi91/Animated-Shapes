@@ -20,6 +20,7 @@ export default function SSSSS() {
   const animations = useRef([]);
   const isRgb = useRef(parseUrl().isRgb ?? false);
   const animationsRgb = useRef([]);
+  const timer = useRef(null);
 
   const createSSSSSs = () => {
     const result = [];
@@ -47,11 +48,7 @@ export default function SSSSS() {
     return result;
   };
 
-  const setupAnimation = () => {
-    stop();
-    animations.current = [];
-    animationsRgb.current = [];
-
+  const createAnimations = () => {
     const SSSSSs = document.querySelectorAll('.SSSSS');
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
@@ -99,6 +96,15 @@ export default function SSSSS() {
       }
     }
     play();
+  };
+
+  const setupAnimation = () => {
+    stop();
+    animations.current = [];
+    animationsRgb.current = [];
+    // animationsDash.current = [];
+    clearTimeout(timer.current);
+    timer.current = setTimeout(createAnimations, 300);
   };
 
   const disco = async () => {
@@ -411,7 +417,7 @@ export default function SSSSS() {
             min='5'
             max='150'
             name='zoom'
-            defaultValue={parseUrl().zoom ?? 100}
+            defaultValue={parseUrl().zoom ?? 95}
             onChange={onZoomChange}
           />
 

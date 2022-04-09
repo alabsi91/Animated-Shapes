@@ -21,6 +21,7 @@ export default function SwirlingLines() {
   const animations = useRef([]);
   const isRgb = useRef(parseUrl().isRgb ?? false);
   const animationsRgb = useRef([]);
+  const timer = useRef(null);
 
   const createSwirlingLiness = () => {
     const result = [];
@@ -60,11 +61,7 @@ export default function SwirlingLines() {
     return result;
   };
 
-  const setupAnimation = () => {
-    stop();
-    animations.current = [];
-    animationsRgb.current = [];
-
+  const createAnimations = () => {
     const SwirlingLines = document.querySelectorAll('.SwirlingLines');
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
@@ -118,6 +115,14 @@ export default function SwirlingLines() {
       }
     }
     play();
+  };
+
+  const setupAnimation = () => {
+    stop();
+    animations.current = [];
+    animationsRgb.current = [];
+    clearTimeout(timer.current);
+    timer.current = setTimeout(createAnimations, 300);
   };
 
   const disco = async () => {
