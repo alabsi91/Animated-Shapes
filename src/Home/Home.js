@@ -11,6 +11,7 @@ export default function Home() {
 
   return (
     <div className='container'>
+      <Card path='Clock' />
       <Card path='MultiSidedPolygon' />
       <Card path='Trinity' />
       <Card path='SwirlingLines' />

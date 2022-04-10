@@ -3,138 +3,135 @@
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
 import { addUrlQuery, parseUrl, useLazyCss, sleep } from '..';
-import styles from './SwirlingLines.lazy.css';
+import styles from './Clock.lazy.css';
 
-export default function SwirlingLines() {
+const getXY = (x, y, angle, length) => [
+  +(x + Math.cos((Math.PI * angle) / 180) * length).toFixed(2),
+  +(y + Math.sin((Math.PI * angle) / 180) * length).toFixed(2),
+];
+
+export default function Clock() {
   useLazyCss(styles);
 
-  const [count, setCount] = useState(parseUrl().count ?? 10);
-  const [multiplier, setMultiplier] = useState(parseUrl().multiplier ?? 3);
+  const [count, setCount] = useState(parseUrl().count ?? 20);
+  const [multiplier, setMultiplier] = useState(parseUrl().multiplier ?? 4);
 
   const isRandomColor = useRef(parseUrl().isRandomColor ?? false);
   const isDisco = useRef(parseUrl().isDisco ?? false);
   const isGlowing = useRef(parseUrl().isGlowing ?? false);
   const easing = useRef(parseUrl().easing ?? 'ease.inOut.quad');
-  const delay = useRef(parseUrl().delay ?? 150);
-  const duration = useRef(parseUrl().duration ?? 1000);
-  const isAnimation = useRef(parseUrl().isAnimation ?? true);
+  const delay = useRef(parseUrl().delay ?? 10);
+  const duration = useRef(parseUrl().duration ?? 400);
   const animations = useRef([]);
   const isRgb = useRef(parseUrl().isRgb ?? false);
   const animationsRgb = useRef([]);
-  const isDash = useRef(parseUrl().isDash ?? false);
-  const animationsDash = useRef([]);
   const timer = useRef(null);
 
-  const createSwirlingLiness = () => {
+  const createClocks = () => {
     const result = [];
     const lineLength = 250 / count;
 
     for (let i = 0; i < count; i++) {
       const color = generateColor();
-      const lineCount = multiplier * 2 * (i + 1);
-      const xy = [];
+      const lineCount = multiplier * (i + 1);
 
-      for (let point = 0; point < lineCount; point++) {
-        const angle = 360 / lineCount;
-        const x1 = +(250 + Math.cos((Math.PI * angle * point) / 180) * (lineLength * i)).toFixed(2);
-        const y1 = +(250 + Math.sin((Math.PI * angle * point) / 180) * (lineLength * i)).toFixed(2);
-        const x2 = +(x1 + Math.cos((Math.PI * angle * point) / 180) * lineLength).toFixed(2);
-        const y2 = +(y1 + Math.sin((Math.PI * angle * point) / 180) * lineLength).toFixed(2);
-        xy.push(`M ${x1} ${y1} L ${x2} ${y2}`);
+      if (i % 2 && i !== 1) {
+        const pathes = [];
+
+        for (let point = 0; point < lineCount; point++) {
+          const angle = (360 / lineCount) * point;
+          const [x1, y1] = getXY(250, 250, angle, lineLength * i);
+          const [x2, y2] = getXY(x1, y1, angle, lineLength);
+          const [xTo, yTo] = getXY(250, 250, angle, lineLength * (i - 1) - 0.5);
+
+          pathes.push(
+            <path
+              className='Clock'
+              key={Math.random() * 100}
+              data-from={[x1, y1, x2, y2]}
+              data-to={[xTo, yTo, x1, y1]}
+              d={`M ${x1} ${y1} L ${x2} ${y2}`}
+              style={{
+                stroke: isRandomColor.current ? color : null,
+                filter:
+                  isGlowing.current && isRandomColor.current
+                    ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
+                    : isGlowing.current
+                    ? `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`
+                    : null,
+              }}
+            />
+          );
+        }
+
+        result.push(
+          <g className='Clock-group' key={Math.random() * 100} style={{ transform: `rotate(${i * multiplier}deg)` }}>
+            {pathes}
+          </g>
+        );
       }
-
-      result.push(
-        <path
-          className='SwirlingLines'
-          key={'SwirlingLines' + i}
-          d={xy.join(' ')}
-          style={{
-            stroke: isRandomColor.current ? color : null,
-            filter:
-              isGlowing.current && isRandomColor.current
-                ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
-                : isGlowing.current
-                ? `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`
-                : null,
-          }}
-        />
-      );
     }
     return result;
   };
 
   const createAnimations = () => {
-    const SwirlingLines = document.querySelectorAll('.SwirlingLines');
+    const clockGroups = document.querySelectorAll('.Clock-group');
+
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
-    for (let i = 0; i < SwirlingLines.length; i++) {
-      const e = SwirlingLines[i];
+    for (let g = 0; g < clockGroups.length; g++) {
+      const clocks = clockGroups[g].querySelectorAll('.Clock');
+      const animationsGroups = [];
+      const animationsGroupsRgb = [];
+      for (let i = 0; i < clocks.length; i++) {
+        const e = clocks[i];
 
-      const duration_custom = duration.current + count * (multiplier * 4) * i;
-      const delay_custom = duration.current + count * (multiplier * 5) * (count - 1 - i) + delay.current * 2;
-
-      if (isAnimation.current) {
-        const callback = ([r], { pause }) => {
+        const callback = ([x1, y1, x2, y2], { pause }) => {
           if (!document.body.contains(e)) pause();
-          e.style.transform = `rotate(${r}deg)`;
+          e.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
         };
+        const from = e.dataset.from.split(',').map(n => +n);
+        const to = e.dataset.to.split(',').map(n => +n);
 
         const a = animare(
           {
-            to: 90,
-            duration: duration_custom,
-            delay: i * delay.current,
+            from,
+            to,
+            duration: duration.current,
             autoPlay: false,
             ease: getEase,
           },
           callback
-        ).next({ to: 0, delay: delay_custom });
+        ).next({ to: from });
         a.setTimelineOptions({ repeat: -1 });
-        animations.current.push(a);
+        animationsGroups.push(a);
+
+        if (isRgb.current) {
+          const callback_color = ([r, g, b], { pause }) => {
+            if (!document.body.contains(e)) pause();
+            e.style.stroke = `rgb(${r},${g},${b})`;
+            isGlowing.current
+              ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
+              : e.style.removeProperty('filter');
+          };
+          const a_rgb = animare(
+            {
+              from: [255, 0, 0],
+              to: [0, 0, 255],
+              duration: 2000,
+              autoPlay: false,
+            },
+            callback_color
+          )
+            .next({ to: [0, 255, 0] })
+            .next({ to: [255, 0, 0] });
+          a_rgb.setTimelineOptions({ repeat: -1 });
+          animationsGroupsRgb.push(a_rgb);
+        }
       }
-
-      if (isDash.current) {
-        const length = e.getTotalLength();
-        e.style.strokeDasharray = length * 0.1 + 'px';
-
-        const callback_dash = ([o], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.strokeDashoffset = o + 'px';
-        };
-
-        const a_dash = animare(
-          {
-            to: length,
-            duration: duration_custom * 7,
-            delay: delay_custom,
-            autoPlay: false,
-            ease: getEase,
-          },
-          callback_dash
-        ).next({ from: -length, to: 0 });
-        a_dash.setTimelineOptions({ repeat: -1 });
-        animationsDash.current.push(a_dash);
-      }
-
-      if (isRgb.current) {
-        const callback_color = ([r, g, b], { pause, progress, setOptions }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.stroke = `rgb(${r},${g},${b})`;
-          isGlowing.current
-            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
-            : e.style.removeProperty('filter');
-          if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
-        };
-        const a_rgb = animare(
-          { from: [255, 0, 0], to: [0, 0, 255], duration: 2000, delay: i * delay.current, autoPlay: false },
-          callback_color
-        )
-          .next({ to: [0, 255, 0] })
-          .next({ to: [255, 0, 0] });
-        a_rgb.setTimelineOptions({ repeat: -1 });
-        animationsRgb.current.push(a_rgb);
-      }
+      animations.current.push(animationsGroups);
+      if (isRgb.current) animationsRgb.current.push(animationsGroupsRgb);
     }
     play();
   };
@@ -144,16 +141,16 @@ export default function SwirlingLines() {
     animations.current = [];
     animationsRgb.current = [];
     clearTimeout(timer.current);
-    timer.current = setTimeout(createAnimations, 300);
+    timer.current = setTimeout(createAnimations, 700);
   };
 
   const disco = async () => {
-    const SwirlingLines = document.querySelectorAll('.SwirlingLines');
+    const Clocks = document.querySelectorAll('.Clock');
     while (isDisco.current) {
       await new Promise(resolve => setTimeout(resolve, 500));
       if (!isDisco.current) return;
-      for (let i = 0; i < SwirlingLines.length; i++) {
-        const e = SwirlingLines[i];
+      for (let i = 0; i < Clocks.length; i++) {
+        const e = Clocks[i];
         const color = generateColor();
         e.style.stroke = color;
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
@@ -161,21 +158,40 @@ export default function SwirlingLines() {
     }
   };
 
-  const play = () => {
-    for (let i = 0; i < count; i++) {
-      animations.current[i]?.setOptions({ delay: i * delay.current });
-      animationsRgb.current[i]?.setOptions({ delay: i * delay.current });
-      animations.current[i]?.play();
-      animationsDash.current[i]?.play();
-      animationsRgb.current?.[i]?.play();
+  const play = async () => {
+    const d = delay.current;
+    const p = async g => {
+      const group = animations.current?.[g];
+      const group_rgb = animationsRgb.current?.[g];
+      for (let i = 0; i < group.length; i++) {
+        const a = group?.[i];
+        const b = group?.[i + 1];
+        const a_rgb = group_rgb?.[i];
+        const b_rgb = group_rgb?.[i + 1];
+        a?.play();
+        a_rgb?.play();
+        animationsRgb?.[i]?.play();
+        if (d) await a?.asyncOnProgress(d);
+        b?.play();
+        b_rgb?.play();
+        animationsRgb?.[i + 1]?.play();
+      }
+    };
+    for (let g = 0; g < animations.current.length; g++) {
+      p(g);
+      if (d) await sleep(d);
     }
   };
 
   const stop = () => {
-    for (let i = 0; i < count; i++) {
-      animations.current[i]?.stop(0);
-      animationsDash.current?.[i]?.stop(0);
-      animationsRgb.current?.[i]?.stop(0);
+    for (let g = 0; g < animations.current.length; g++) {
+      const group = animations?.current?.[g];
+      const group_rgb = animationsRgb?.current?.[g];
+
+      for (let i = 0; i < group?.length; i++) {
+        group?.[i]?.stop(0);
+        group_rgb?.[i]?.stop(0);
+      }
     }
   };
 
@@ -221,7 +237,12 @@ export default function SwirlingLines() {
   const onDurationChange = e => {
     duration.current = +e.target.value;
     addUrlQuery({ duration: +e.target.value });
-    setupAnimation();
+    for (let g = 0; g < animations.current.length; g++) {
+      const group = animations.current[g];
+      for (let i = 0; i < group.length; i++) {
+        group[i]?.setOptions({ duration: duration.current });
+      }
+    }
   };
 
   const onDelayChange = e => {
@@ -237,21 +258,9 @@ export default function SwirlingLines() {
   };
 
   const onZoomChange = e => {
-    document.querySelector('.SwirlingLines-svg').style.height = (e?.target?.value ?? e) + '%';
-    document.querySelector('.SwirlingLines-svg').style.width = (e?.target?.value ?? e) + '%';
+    document.querySelector('.Clock-svg').style.height = (e?.target?.value ?? e) + '%';
+    document.querySelector('.Clock-svg').style.width = (e?.target?.value ?? e) + '%';
     if (e?.target?.value) addUrlQuery({ zoom: +e.target.value });
-  };
-
-  const onDashChange = e => {
-    isDash.current = e.target.checked;
-    addUrlQuery({ isDash: e.target.checked });
-    if (!isDash.current) {
-      animationsDash.current.forEach(a => a.stop(0));
-      animationsDash.current = [];
-      document.querySelectorAll('.SwirlingLines').forEach(e => {
-        e.style.removeProperty('stroke-dasharray');
-      });
-    } else setupAnimation();
   };
 
   const onRGBChange = async e => {
@@ -262,16 +271,16 @@ export default function SwirlingLines() {
     document.getElementById('color-input').disabled = isRgb.current;
 
     if (isRgb.current) {
-      document.querySelectorAll('.SwirlingLines').forEach(e => {
+      document.querySelectorAll('.Clock').forEach(e => {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
       setupAnimation();
     } else {
-      animationsRgb.current.forEach(a => a.stop(0));
+      animationsRgb.current.forEach(group => group.forEach(a => a?.stop(0)));
       animationsRgb.current = [];
-      await sleep(100);
-      document.querySelectorAll('.SwirlingLines').forEach(e => {
+      await sleep(200);
+      document.querySelectorAll('.Clock').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
           e.style.stroke = color;
@@ -296,7 +305,7 @@ export default function SwirlingLines() {
       disco();
     } else {
       if (isRgb.current) setupAnimation();
-      document.querySelectorAll('.SwirlingLines').forEach(e => {
+      document.querySelectorAll('.Clock').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
           e.style.stroke = color;
@@ -319,7 +328,7 @@ export default function SwirlingLines() {
     if (isGlowing.current) {
       if (isRgb.current) return;
       if (isRandomColor.current) {
-        document.querySelectorAll('.SwirlingLines').forEach(e => {
+        document.querySelectorAll('.Clock').forEach(e => {
           const color = generateColor();
           e.style.stroke = color;
           e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
@@ -327,11 +336,11 @@ export default function SwirlingLines() {
         return;
       }
 
-      document.querySelectorAll('.SwirlingLines').forEach(e => {
+      document.querySelectorAll('.Clock').forEach(e => {
         e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
       });
     } else {
-      document.querySelectorAll('.SwirlingLines').forEach(e => {
+      document.querySelectorAll('.Clock').forEach(e => {
         e.style.removeProperty('filter');
       });
     }
@@ -351,7 +360,7 @@ export default function SwirlingLines() {
     document.getElementById('rgb-check').disabled = isRandomColor.current;
     document.getElementById('disco-check').disabled = isRandomColor.current;
 
-    document.querySelectorAll('.SwirlingLines').forEach(e => {
+    document.querySelectorAll('.Clock').forEach(e => {
       if (isRandomColor.current) {
         const color = generateColor();
         e.style.stroke = color;
@@ -397,26 +406,18 @@ export default function SwirlingLines() {
       </svg>
 
       <div className='container'>
-        <svg className='SwirlingLines-svg' viewBox='0 0 500 500'>
-          {createSwirlingLiness()}
+        <svg className='Clock-svg' viewBox='0 0 500 500'>
+          {createClocks()}
         </svg>
 
         <div className='controls'>
-          <label className='labels' htmlFor='SwirlingLines-count'>
+          <label className='labels' htmlFor='Clock-count'>
             Circles Count:
           </label>
-          <input
-            className='inputs'
-            type='number'
-            min={1}
-            max={100}
-            name='SwirlingLines-Multiplier'
-            value={count}
-            onChange={onCountChange}
-          />
+          <input className='inputs' type='number' min={1} max={100} name='Clock-count' value={count} onChange={onCountChange} />
 
           <label className='labels' htmlFor='SwirlingLines-Multiplier'>
-            Line Multiplier:
+            Multiplier:
           </label>
           <input
             className='inputs'
@@ -428,15 +429,15 @@ export default function SwirlingLines() {
             onChange={onMultiplierChange}
           />
 
-          <label className='labels' htmlFor='SwirlingLines-stroke-width'>
+          <label className='labels' htmlFor='Clock-stroke-width'>
             Stroke width:
           </label>
           <input
             className='inputs'
             type='number'
             min={1}
-            name='SwirlingLines-stroke-width'
-            defaultValue={parseUrl().strokeWidth ?? 1}
+            name='Clock-stroke-width'
+            defaultValue={parseUrl().strokeWidth ?? 2}
             onChange={onStrokeWidthChange}
           />
 
@@ -499,13 +500,6 @@ export default function SwirlingLines() {
             defaultValue={parseUrl().zoom ?? 95}
             onChange={onZoomChange}
           />
-
-          <input className='inputs' type='checkbox' name='dashes-Mode' defaultChecked={isDash.current} onChange={onDashChange} />
-          <label className='labels' htmlFor='dashes-Mode'>
-            {' '}
-            Dashes
-          </label>
-          <br />
 
           <input
             className='inputs'

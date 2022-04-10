@@ -1,0 +1,116 @@
+body {
+  --stroke-color: #fff;
+  --stroke-width: 2px;
+  --glow-trength: 1px;
+}
+
+.Clock-svg {
+  width: 95%;
+  height: 95%;
+  fill: none;
+  transform-origin: center;
+  pointer-events: none;
+}
+.Clock-group {
+  transform-origin: center;
+}
+.Clock {
+  stroke: var(--stroke-color);
+  stroke-width: var(--stroke-width);
+  fill: none;
+  /* stroke-linecap: round; */
+  transform-origin: center;
+}
+
+.container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.toggle-pannel-arrow {
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  width: 24px;
+  height: 24px;
+  fill: white;
+  transform-origin: center;
+  cursor: pointer;
+}
+.controls {
+  position: fixed;
+  left: 0;
+  top: 70px;
+  padding-left: 20px;
+  height: calc(100vh - 70px);
+  overflow-x: hidden;
+}
+.select {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  padding: 2px 1px;
+  font-size: 14px;
+  font-family: 'Courier New', Courier, monospace;
+  text-transform: capitalize;
+}
+.inputs {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  font-family: 'Courier New', Courier, monospace;
+}
+.inputs[type='checkbox'] {
+  display: inline-block;
+}
+.inputs[type='number'] {
+  width: 80%;
+}
+.inputs[type='range'],
+.select {
+  width: 85%;
+}
+.inputs[type='color'] {
+  appearance: none;
+  display: inline-block;
+  margin: 0px;
+  margin-right: 10px;
+  background: none;
+  border: 0;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.inputs[type='color']:disabled {
+  cursor: not-allowed;
+}
+.inputs[type='color']:disabled + .labels {
+  opacity: 0.5;
+}
+::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 50%;
+}
+::-webkit-color-swatch {
+  border-radius: 50%;
+}
+::-moz-color-swatch,
+::-moz-focus-inner {
+  border-radius: 50%;
+}
+::-moz-focus-inner {
+  padding: 0;
+  border-radius: 50%;
+}
+.labels {
+  color: white;
+  font-size: 18px;
+  font-family: 'Courier New', Courier, monospace;
+}
