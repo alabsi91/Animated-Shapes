@@ -6,31 +6,35 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
 
-  --size: 200px;
-  --color: white;
-  --stroke: 1px;
+  --zoom: 20%;
   --space: 0px;
+  --stroke-color: #fff;
+  --stroke-width: 1px;
+  --glow-trength: 2px;
+}
+
+.Monoton-svg {
+  fill: none;
+  transform-origin: center;
+  pointer-events: none;
+  width: var(--zoom);
+  height: calc(var(--zoom) + 50px);
+  margin-right: var(--space);
+}
+
+.Monoton {
+  stroke: var(--stroke-color);
+  stroke-width: var(--stroke-width);
+  fill: none;
+  stroke-linecap: round;
+  transform-origin: center;
 }
 
 .container {
   text-align: center;
 }
-
-.letters {
-  fill: none;
-  width: var(--size);
-  height: calc(var(--size) + 50px);
-  margin-right: var(--space);
-}
-
 .container :last-child {
   margin-right: 0;
-}
-
-.letters path {
-  stroke: var(--color);
-  stroke-width: var(--stroke);
-  stroke-linecap: round;
 }
 
 .toggle-pannel-arrow {
@@ -51,17 +55,65 @@ body {
   height: calc(100vh - 70px);
   overflow-x: hidden;
 }
+.select {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  padding: 2px 1px;
+  font-size: 14px;
+  font-family: 'Courier New', Courier, monospace;
+  text-transform: capitalize;
+}
 .inputs {
   display: block;
   margin-top: 5px;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  font-family: 'Courier New', Courier, monospace;
 }
 .inputs[type='checkbox'] {
   display: inline-block;
 }
+.inputs[type='number'] {
+  width: 80%;
+}
+.inputs[type='range'],
+.select {
+  width: 85%;
+}
 .inputs[type='color'] {
+  appearance: none;
   display: inline-block;
+  margin: 0px;
   margin-right: 10px;
+  background: none;
+  border: 0;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.inputs[type='color']:disabled {
+  cursor: not-allowed;
+}
+.inputs[type='color']:disabled + .labels {
+  opacity: 0.5;
+}
+::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 50%;
+}
+::-webkit-color-swatch {
+  border-radius: 50%;
+}
+::-moz-color-swatch,
+::-moz-focus-inner {
+  border-radius: 50%;
+}
+::-moz-focus-inner {
+  padding: 0;
+  border-radius: 50%;
 }
 .labels {
   color: white;

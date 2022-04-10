@@ -7,16 +7,26 @@ body {
   --stroke-width: 2px;
 }
 
+.container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
 #tridiv {
   perspective: 1800px;
   position: absolute;
   overflow: hidden;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background: transparent;
   font-size: 100%;
   pointer-events: none;
 }
+
 .face {
   box-shadow: inset 0px 0px 10px 4px rgb(0 0 0 / 20%);
 }
@@ -137,7 +147,6 @@ body {
   transform-origin: center;
   cursor: pointer;
 }
-
 .controls {
   position: fixed;
   left: 0;
@@ -146,18 +155,75 @@ body {
   height: calc(100vh - 70px);
   overflow-x: hidden;
 }
-
+.color-input-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0px;
+}
+.color-input-wrapper input {
+  margin-bottom: 0px;
+  margin-top: 0px;
+}
+.select {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  padding: 2px 1px;
+  font-size: 14px;
+  font-family: 'Courier New', Courier, monospace;
+  text-transform: capitalize;
+}
 .inputs {
   display: block;
   margin-top: 5px;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  font-family: 'Courier New', Courier, monospace;
 }
 .inputs[type='checkbox'] {
   display: inline-block;
 }
+.inputs[type='number'] {
+  width: 80%;
+}
+.inputs[type='range'],
+.select {
+  width: 85%;
+}
 .inputs[type='color'] {
+  appearance: none;
   display: inline-block;
+  margin: 0px;
   margin-right: 10px;
+  background: none;
+  border: 0;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.inputs[type='color']:disabled {
+  cursor: not-allowed;
+}
+.inputs[type='color']:disabled + .labels {
+  opacity: 0.5;
+}
+::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 50%;
+}
+::-webkit-color-swatch {
+  border-radius: 50%;
+}
+::-moz-color-swatch,
+::-moz-focus-inner {
+  border-radius: 50%;
+}
+::-moz-focus-inner {
+  padding: 0;
+  border-radius: 50%;
 }
 .labels {
   color: white;

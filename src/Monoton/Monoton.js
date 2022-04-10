@@ -1,46 +1,53 @@
-/* eslint-disable no-loop-func */
 /* eslint-disable react-hooks/exhaustive-deps */
-import styles from './Monoton.lazy.css';
-import { useState, useEffect, cloneElement, useRef } from 'react';
+/* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
-import Letters from './Letters';
-import { useLazyCss } from '..';
+import { useEffect, useState, useRef, cloneElement } from 'react';
+import { addUrlQuery, parseUrl, useLazyCss, sleep } from '..';
+import Letters from '../Monoton/Letters';
+import styles from './Monoton.lazy.css';
 
 export default function Monoton() {
   useLazyCss(styles);
 
-  const [text, setText] = useState('TEXT');
+  const [text, setText] = useState(parseUrl()?.text?.replaceAll('%20', ' ') ?? 'TEXT');
 
-  const animations = useRef([]);
-  const animationRgb = useRef([]);
-  const duration = useRef(2000);
-  const delay = useRef(150);
-  const isRandomColor = useRef(false);
-  const isRgb = useRef(false);
-  const isDisco = useRef(false);
-  const isGlowing = useRef(false);
+  const isRandomColor = useRef(parseUrl().isRandomColor ?? false);
+  const isDisco = useRef(parseUrl().isDisco ?? false);
+  const isGlowing = useRef(parseUrl().isGlowing ?? false);
+  const easing = useRef(parseUrl().easing ?? 'ease.inOut.quad');
+  const delay = useRef(parseUrl().delay ?? 150);
+  const duration = useRef(parseUrl().duration ?? 2000);
+  const isRgb = useRef(parseUrl().isRgb ?? false);
+  const animationsRgb = useRef([]);
+  const isDash = useRef(parseUrl().isDash ?? true);
+  const animationsDash = useRef([]);
+  const timer = useRef(null);
 
-  const createLetters = () => {
+  const createMonotons = () => {
     const result = [];
     for (let i = 0; i < text.length; i++) {
       const L = Letters?.[text[i].toUpperCase()];
-
+      const color = generateColor();
       if (L)
         result.push(
           cloneElement(
             L,
             {
               key: Math.random() * 100,
-              className: 'letters',
+              className: 'Monoton-svg',
             },
             L?.props?.children?.map(c =>
               cloneElement(c, {
                 key: Math.random() * 100,
+                className: 'Monoton',
                 style: {
-                  stroke: isRandomColor.current ? generateColor() : null,
-                  filter: isGlowing.current
-                    ? `drop-shadow(0px 0px 3px ${isRandomColor.current ? generateColor() : 'var(--color)'})`
-                    : null,
+                  stroke: isRandomColor.current ? color : null,
+                  filter:
+                    isGlowing.current && isRandomColor.current
+                      ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
+                      : isGlowing.current
+                      ? `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`
+                      : null,
                 },
               })
             )
@@ -50,99 +57,108 @@ export default function Monoton() {
     return result;
   };
 
-  const setupAnimation = () => {
-    stop();
-    animations.current = [];
-    animationRgb.current = [];
-
-    const letters = document.querySelectorAll('.letters');
+  const createAnimations = () => {
+    const letters = document.querySelectorAll('.Monoton-svg');
+    let getEase = easing.current.split('.');
+    getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
     for (let i = 0; i < letters.length; i++) {
-      const pathes = letters[i].childNodes;
+      const Monotons = letters[i].childNodes;
 
-      for (let p = 0; p < pathes.length; p++) {
-        const path = pathes[p];
+      for (let p = 0; p < Monotons.length; p++) {
+        const e = Monotons[p];
 
-        const length = path.getTotalLength();
-        path.style.strokeDasharray = length / 2 + 'px';
-        path.style.strokeDashoffset = length + 'px';
+        if (isDash.current) {
+          const length = e.getTotalLength();
+          e.style.strokeDasharray = length / 2 + 'px';
+          e.style.strokeDashoffset = length + 'px';
 
-        const callback = ([o, a], { pause }) => {
-          if (!document.contains(path)) pause();
-          path.style.strokeDasharray = a + 'px';
-          path.style.strokeDashoffset = o + 'px';
-        };
+          const callback_dash = ([o, a], { pause }) => {
+            if (!document.body.contains(e)) pause();
+            e.style.strokeDashoffset = o + 'px';
+            e.style.strokeDasharray = a + 'px';
+          };
 
-        const callback_color = ([r, g, b], { progress, setOptions, pause }) => {
-          if (!document.contains(path)) pause();
-          path.style.stroke = `rgb(${r},${g},${b})`;
-          isGlowing.current
-            ? (path.style.filter = `drop-shadow(0px 0px 3px rgb(${r},${g},${b}))`)
-            : path.style.removeProperty('filter');
+          const a_dash = animare(
+            {
+              from: [length, length / 2],
+              to: [0, length],
+              duration: duration.current,
+              delay: p * delay.current,
+              autoPlay: false,
+              ease: getEase,
+            },
+            callback_dash
+          )
+            .next({ to: [-length, length / 2] })
+            .next({ to: [0, length] })
+            .next({ to: [length, length / 2] });
 
-          if (progress === 100) {
-            setOptions({ delay: (pathes.length - 1 - i) * 200 + i * 200 });
-          }
-        };
-
-        const a = animare(
-          {
-            from: [length, length / 2],
-            to: [0, length],
-            duration: duration.current,
-            delay: p * delay.current,
-            autoPlay: false,
-            ease: ease.inOut.quad,
-          },
-          callback
-        )
-          .next({ to: [-length, length / 2] })
-          .next({ to: [0, length] })
-          .next({ to: [length, length / 2] });
-        a.setTimelineOptions({ repeat: -1 });
-        animations.current.push(a);
+          a_dash.setTimelineOptions({ repeat: -1 });
+          animationsDash.current.push(a_dash);
+        }
 
         if (isRgb.current) {
-          const b = animare(
+          const callback_color = ([r, g, b], { pause, progress, setOptions }) => {
+            if (!document.body.contains(e)) pause();
+            e.style.stroke = `rgb(${r},${g},${b})`;
+            isGlowing.current
+              ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
+              : e.style.removeProperty('filter');
+            if (progress === 100) setOptions({ delay: (Monotons.length - 1 - i) * 200 + i * 200 });
+          };
+
+          const a_rgb = animare(
             { from: [255, 0, 0], to: [0, 0, 255], duration: 2000, delay: p * delay.current + i * 50, autoPlay: false },
             callback_color
           )
             .next({ to: [0, 255, 0] })
             .next({ to: [255, 0, 0] });
-          b.setTimelineOptions({ repeat: -1 });
-          animationRgb.current.push(b);
+
+          a_rgb.setTimelineOptions({ repeat: -1 });
+          animationsRgb.current.push(a_rgb);
         }
       }
     }
     play();
   };
 
+  const setupAnimation = () => {
+    stop();
+    animationsRgb.current = [];
+    animationsDash.current = [];
+    clearTimeout(timer.current);
+    timer.current = setTimeout(createAnimations, 300);
+  };
+
   const disco = async () => {
-    const pathes = document.querySelectorAll('.letters path');
+    const Monotons = document.querySelectorAll('.Monoton');
     while (isDisco.current) {
       await new Promise(resolve => setTimeout(resolve, 500));
       if (!isDisco.current) return;
-      for (let i = 0; i < pathes.length; i++) {
-        const path = pathes[i];
+      for (let i = 0; i < Monotons.length; i++) {
+        const e = Monotons[i];
         const color = generateColor();
-        path.style.stroke = color;
-        if (isGlowing.current) path.style.filter = `drop-shadow(0px 0px 3px ${color})`;
+        e.style.stroke = color;
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
       }
     }
   };
 
   const play = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animationRgb.current[i]?.setOptions({ delay: i * delay.current });
-      animationRgb.current[i]?.play();
-      animations.current[i].play();
+    const Monotons = document.querySelectorAll('.Monoton');
+    for (let i = 0; i < Monotons.length; i++) {
+      animationsRgb.current[i]?.setOptions({ delay: i * delay.current });
+      animationsDash.current[i]?.play();
+      animationsRgb.current?.[i]?.play();
     }
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i].stop('25%');
-      animationRgb.current[i]?.stop('25%');
+    const Monotons = document.querySelectorAll('.Monoton');
+    for (let i = 0; i < Monotons.length; i++) {
+      animationsDash.current?.[i]?.stop(0);
+      animationsRgb.current?.[i]?.stop(0);
     }
   };
 
@@ -152,6 +168,14 @@ export default function Monoton() {
   }, [text]);
 
   useEffect(() => {
+    const params = parseUrl();
+    if (params.strokeColor) document.body.style.setProperty('--stroke-color', '#' + params.strokeColor);
+    if (params.strokeWidth) document.body.style.setProperty('--stroke-width', params.strokeWidth + 'px');
+    if (params.glowStrength) document.body.style.setProperty('--glow-trength', params.glowStrength + 'px');
+    if (params.backgroundColor) onBgColorChange('#' + params.backgroundColor);
+    if (params.zoom) document.body.style.setProperty('--zoom', params.zoom + '%');
+    if (params.space) document.body.style.setProperty('--space', params.space + 'px');
+
     window.addEventListener('focus', play);
     window.addEventListener('blur', stop);
 
@@ -163,126 +187,173 @@ export default function Monoton() {
 
   const onTextChange = e => {
     setText(e.target.value.toUpperCase());
+    addUrlQuery({ text: e.target.value.toUpperCase() });
   };
 
-  const onStrokeChange = e => {
-    document.body.style.setProperty('--stroke', +e.target.value + 'px');
-  };
-
-  const onSizeChange = e => {
-    document.body.style.setProperty('--size', +e.target.value + 'px');
-  };
-
-  const onSpaceChange = e => {
-    document.body.style.setProperty('--space', +e.target.value + 'px');
+  const onStrokeWidthChange = e => {
+    document.body.style.setProperty('--stroke-width', e.target.value);
+    addUrlQuery({ strokeWidth: +e.target.value });
   };
 
   const onDurationChange = e => {
     duration.current = +e.target.value;
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.setOptions({ duration: duration.current });
+    addUrlQuery({ duration: +e.target.value });
+    for (let i = 0; i < animationsDash.current.length; i++) {
+      animationsDash.current[i]?.setOptions({ duration: duration.current });
     }
   };
 
   const onDelayChange = e => {
     delay.current = +e.target.value;
+    addUrlQuery({ delay: +e.target.value });
     setupAnimation();
+  };
+
+  const onEaseChange = e => {
+    easing.current = e.target.value;
+    addUrlQuery({ easing: e.target.value });
+    setupAnimation();
+  };
+
+  const onZoomChange = e => {
+    document.body.style.setProperty('--zoom', +e.target.value + '%');
+    addUrlQuery({ zoom: +e.target.value });
+  };
+
+  const onSpaceChange = e => {
+    document.body.style.setProperty('--space', +e.target.value + 'px');
+    addUrlQuery({ space: +e.target.value });
+  };
+
+  const onDashChange = e => {
+    isDash.current = e.target.checked;
+    addUrlQuery({ isDash: e.target.checked });
+    if (!isDash.current) {
+      animationsDash.current.forEach(a => a.stop(0));
+      animationsDash.current = [];
+      document.querySelectorAll('.Monoton').forEach(e => {
+        e.style.removeProperty('stroke-dasharray');
+      });
+    } else setupAnimation();
   };
 
   const onRGBChange = async e => {
     isRgb.current = e.target.checked;
+    addUrlQuery({ isRgb: isRgb.current });
     document.getElementById('random-check').disabled = isRgb.current;
     document.getElementById('disco-check').disabled = isRgb.current;
+    document.getElementById('color-input').disabled = isRgb.current;
 
     if (isRgb.current) {
-      document.querySelectorAll('.letters path').forEach(e => {
+      document.querySelectorAll('.Monoton').forEach(e => {
         e.style.stroke = 'red';
-        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px 3px red)`;
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
       setupAnimation();
     } else {
-      animationRgb.current.forEach(a => a.stop(0));
-      animationRgb.current = [];
-      await new Promise(resolve => setTimeout(resolve, 100));
-      document.querySelectorAll('.letters path').forEach(e => {
+      animationsRgb.current.forEach(a => a.stop(0));
+      animationsRgb.current = [];
+      await sleep(100);
+      document.querySelectorAll('.Monoton').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
           e.style.stroke = color;
-          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px 3px ${color})`;
+          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
           return;
         }
         e.style.removeProperty('stroke');
-        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px 3px var(--color))`;
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
       });
     }
   };
 
   const onDiscoChange = e => {
     isDisco.current = e.target.checked;
+    addUrlQuery({ isDisco: isDisco.current });
     document.getElementById('random-check').disabled = isDisco.current;
     document.getElementById('rgb-check').disabled = isDisco.current;
+    document.getElementById('color-input').disabled = isDisco.current;
 
     if (isDisco.current) {
-      if (isRgb.current) animationRgb.current.forEach(a => a.pause());
+      if (isRgb.current) animationsRgb.current.forEach(a => a.pause());
       disco();
     } else {
       if (isRgb.current) setupAnimation();
-      document.querySelectorAll('.letters path').forEach(e => {
+      document.querySelectorAll('.Monoton').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
           e.style.stroke = color;
-          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px 3px ${color})`;
+          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
           return;
         }
         e.style.removeProperty('stroke');
-        isGlowing.current ? (e.style.filter = `drop-shadow(0px 0px 3px var(--color))`) : e.style.removeProperty('filter');
+        isGlowing.current
+          ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`)
+          : e.style.removeProperty('filter');
       });
     }
   };
 
-  const onGlowChange = async e => {
+  const onGlowChange = e => {
     isGlowing.current = e.target.checked;
+    addUrlQuery({ isGlowing: isGlowing.current });
+    document.getElementById('glow-input').disabled = !isGlowing.current;
+
     if (isGlowing.current) {
       if (isRgb.current) return;
       if (isRandomColor.current) {
-        document.querySelectorAll('.letters path').forEach(e => {
+        document.querySelectorAll('.Monoton').forEach(e => {
           const color = generateColor();
           e.style.stroke = color;
-          e.style.filter = `drop-shadow(0px 0px 3px ${color})`;
+          e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
         });
         return;
       }
 
-      document.querySelectorAll('.letters path').forEach(e => {
-        e.style.filter = `drop-shadow(0px 0px 3px var(--color))`;
+      document.querySelectorAll('.Monoton').forEach(e => {
+        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
       });
     } else {
-      document.querySelectorAll('.letters path').forEach(e => {
+      document.querySelectorAll('.Monoton').forEach(e => {
         e.style.removeProperty('filter');
       });
     }
   };
 
+  const onGlowStrengthChange = e => {
+    document.body.style.setProperty('--glow-trength', e.target.value + 'px');
+    addUrlQuery({ glowStrength: e.target.value });
+  };
+
   const onRandomColorChange = e => {
     isRandomColor.current = e.target.checked;
-    document.querySelectorAll('.letters path').forEach(e => {
+
+    addUrlQuery({ isRandomColor: e.target.checked });
+
+    document.getElementById('color-input').disabled = isRandomColor.current;
+    document.getElementById('rgb-check').disabled = isRandomColor.current;
+    document.getElementById('disco-check').disabled = isRandomColor.current;
+
+    document.querySelectorAll('.Monoton').forEach(e => {
       if (isRandomColor.current) {
         const color = generateColor();
         e.style.stroke = color;
-        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px 3px ${color})`;
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
         return;
       }
       e.style.removeProperty('stroke');
-      if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px 3px var(--color))`;
+      if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
     });
   };
 
   const onColorChange = e => {
-    document.body.style.setProperty('--color', e.target.value);
+    document.body.style.setProperty('--stroke-color', e.target.value);
+    addUrlQuery({ strokeColor: e.target.value.replace('#', '') });
   };
 
   const onBgColorChange = e => {
-    document.body.style.backgroundColor = e.target.value;
+    document.body.style.backgroundColor = e?.target?.value ?? e;
+    if (e?.target?.value) addUrlQuery({ backgroundColor: e.target.value.replace('#', '') });
     const inverted = invertColor(getComputedStyle(document.body).backgroundColor);
     [...document.getElementsByClassName('labels')].forEach(el => (el.style.color = inverted));
     document.querySelector('.toggle-pannel-arrow').style.fill = inverted;
@@ -308,28 +379,25 @@ export default function Monoton() {
         <path d='M11.67 3.87L9.9 2.1 0 12l9.9 9.9 1.77-1.77L3.54 12z' />
       </svg>
 
-      <div className='container'>{createLetters()}</div>
+      <div className='container'>{createMonotons()}</div>
 
       <div className='controls'>
-        <label className='labels' htmlFor='text'>
+        <label className='labels' htmlFor='Monoton-text'>
           Text:
         </label>
-        <input className='inputs' type='text' name='text' value={text} onChange={onTextChange} />
+        <input className='inputs' type='text' name='Monoton-text' value={text} onChange={onTextChange} />
 
-        <label className='labels' htmlFor='size'>
-          Size:
+        <label className='labels' htmlFor='Monoton-stroke-width'>
+          Stroke width:
         </label>
-        <input className='inputs' type='number' step={10} min='1' name='size' defaultValue={200} onChange={onSizeChange} />
-
-        <label className='labels' htmlFor='space'>
-          Space:
-        </label>
-        <input className='inputs' type='number' step={5} name='space' defaultValue={0} onChange={onSpaceChange} />
-
-        <label className='labels' htmlFor='stroke-width'>
-          Stroke Width:
-        </label>
-        <input className='inputs' type='number' min='1' name='stroke-width' defaultValue={1} onChange={onStrokeChange} />
+        <input
+          className='inputs'
+          type='number'
+          min={1}
+          name='Monoton-stroke-width'
+          defaultValue={parseUrl().strokeWidth ?? 1}
+          onChange={onStrokeWidthChange}
+        />
 
         <label className='labels' htmlFor='duration'>
           Duration:
@@ -357,55 +425,166 @@ export default function Monoton() {
           onChange={onDelayChange}
         />
 
+        <label className='labels' htmlFor='ease-select'>
+          Ease:
+        </label>
+        <select className='select' name='ease-select' defaultValue={easing.current} onChange={onEaseChange}>
+          <optgroup />
+          <option value='linear'>- linear</option>
+          <optgroup />
+          {Object.keys(ease.in).map(e => (
+            <option key={`ease.in.${e}`} value={`ease.in.${e}`}>{`- in ${e}`}</option>
+          ))}
+          <optgroup />
+          {Object.keys(ease.out).map(e => (
+            <option key={`ease.out.${e}`} value={`ease.out.${e}`}>{`- out ${e}`}</option>
+          ))}
+          <optgroup />
+          {Object.keys(ease.inOut).map(e => (
+            <option key={`ease.inOut.${e}`} value={`ease.inOut.${e}`}>{`- inOut ${e}`}</option>
+          ))}
+          <optgroup />
+        </select>
+
+        <label className='labels' htmlFor='zoom'>
+          Zoom:
+        </label>
+        <input
+          className='inputs'
+          type='range'
+          min='5'
+          max='150'
+          name='zoom'
+          defaultValue={parseUrl().zoom ?? 20}
+          onChange={onZoomChange}
+        />
+
+        <label className='labels' htmlFor='space'>
+          Space:
+        </label>
+        <input
+          className='inputs'
+          type='range'
+          min='-300'
+          max='20'
+          name='space'
+          defaultValue={parseUrl().space ?? 0}
+          onChange={onSpaceChange}
+        />
+
+        <input className='inputs' type='checkbox' name='dashes-Mode' defaultChecked={isDash.current} onChange={onDashChange} />
+        <label className='labels' htmlFor='dashes-Mode'>
+          {' '}
+          Dashes
+        </label>
         <br />
-        <input className='inputs' id='rgb-check' type='checkbox' name='RGB-Mode' onChange={onRGBChange} />
+
+        <input
+          className='inputs'
+          id='rgb-check'
+          type='checkbox'
+          name='RGB-Mode'
+          defaultChecked={isRgb.current}
+          disabled={isDisco.current || isRandomColor.current}
+          onChange={onRGBChange}
+        />
         <label className='labels' htmlFor='RGB-Mode'>
           {' '}
-          RGB Mode
+          RGB
         </label>
 
         <br />
-        <input className='inputs' id='disco-check' type='checkbox' name='Disco-Mode' onChange={onDiscoChange} />
+        <input
+          className='inputs'
+          id='disco-check'
+          type='checkbox'
+          name='Disco-Mode'
+          defaultChecked={isDisco.current}
+          disabled={isRgb.current || isRandomColor.current}
+          onChange={onDiscoChange}
+        />
         <label className='labels' htmlFor='Disco-Mode'>
           {' '}
-          Disco Mode
+          Disco
         </label>
 
         <br />
-        <input className='inputs' id='glow-check' type='checkbox' name='Glow-Mode' onChange={onGlowChange} />
-        <label className='labels' htmlFor='Glow-Mode'>
-          {' '}
-          Glow
-        </label>
-
-        <br />
-        <input className='inputs' id='random-check' type='checkbox' name='randomColor' onChange={onRandomColorChange} />
+        <input
+          className='inputs'
+          id='random-check'
+          type='checkbox'
+          name='randomColor'
+          defaultChecked={isRandomColor.current}
+          disabled={isDisco.current || isRgb.current}
+          onChange={onRandomColorChange}
+        />
         <label className='labels' htmlFor='randomColor'>
           {' '}
           Random Colors
         </label>
 
         <br />
-        <br />
-        <label className='labels' htmlFor='letters-color'>
-          Color:
+        <input
+          className='inputs'
+          id='glow-check'
+          type='checkbox'
+          name='Glow-Mode'
+          defaultChecked={isGlowing.current}
+          onChange={onGlowChange}
+        />
+        <label className='labels' htmlFor='Glow-Mode'>
+          {' '}
+          Glow
         </label>
-        <br />
-        <input className='inputs' type='color' name='letters-color' defaultValue='#ffffff' onChange={onColorChange} />
 
         <br />
-        <label className='labels' htmlFor='bg-color'>
-          Background Color:
+        <label className='labels' htmlFor='glow-strength'>
+          Glow strength:
         </label>
+        <input
+          className='inputs'
+          id='glow-input'
+          step='0.5'
+          type='number'
+          name='glow-strength'
+          min='0.5'
+          defaultValue={parseUrl().glowStrength ?? 2}
+          onChange={onGlowStrengthChange}
+          disabled={!isGlowing.current}
+        />
+
+        <input
+          className='inputs'
+          id='color-input'
+          type='color'
+          name='color'
+          defaultValue={'#' + (parseUrl()?.strokeColor ?? 'ffffff')}
+          disabled={isRandomColor.current || isDisco.current || isRgb.current}
+          onChange={onColorChange}
+        />
+        <label className='labels' htmlFor='color'>
+          Stroke Color
+        </label>
+
         <br />
-        <input className='inputs' type='color' name='bg-color' onChange={onBgColorChange} />
+        <br />
+
+        <input
+          className='inputs'
+          type='color'
+          name='bg-color'
+          defaultValue={'#' + (parseUrl()?.backgroundColor ?? '000000')}
+          onChange={onBgColorChange}
+        />
+        <label className='labels' htmlFor='bg-color'>
+          Background Color
+        </label>
       </div>
     </>
   );
 }
 
 const randomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-
 const hslToHex = (h, s, l) => {
   l /= 100;
   const a = (s * Math.min(l, 1 - l)) / 100;
@@ -418,13 +597,11 @@ const hslToHex = (h, s, l) => {
   };
   return `#${f(0)}${f(8)}${f(4)}`;
 };
-
 const generateColor = () => {
   const h = randomNumber(50, 360);
   const s = randomNumber(50, 100);
   return hslToHex(h, s, 50);
 };
-
 const invertColor = color => {
   const rgb = color.match(/\d+/g);
   const r = 255 - rgb[0];

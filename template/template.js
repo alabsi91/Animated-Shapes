@@ -76,7 +76,7 @@ export default function SSSSS() {
         const length = e.getTotalLength();
         e.style.strokeDasharray = length / 3 + 'px';
 
-        const callback = ([o], { pause }) => {
+        const callback_dash = ([o], { pause }) => {
           if (!document.body.contains(e)) pause();
           e.style.strokeDashoffset = o + 'px';
         };
@@ -89,14 +89,14 @@ export default function SSSSS() {
             autoPlay: false,
             ease: getEase,
           },
-          callback
+          callback_dash
         ).next({ from: -length, to: 0 });
         a_dash.setTimelineOptions({ repeat: -1 });
         animationsDash.current.push(a_dash);
       }
 
       if (isRgb.current) {
-        const callback_color = ([r, g, b], { pause, progress, setOptions }) => {
+        const callback_rgb = ([r, g, b], { pause, progress, setOptions }) => {
           if (!document.body.contains(e)) pause();
           e.style.stroke = `rgb(${r},${g},${b})`;
           isGlowing.current
@@ -106,7 +106,7 @@ export default function SSSSS() {
         };
         const a_rgb = animare(
           { from: [255, 0, 0], to: [0, 0, 255], duration: 2000, delay: i * delay.current, autoPlay: false },
-          callback_color
+          callback_rgb
         )
           .next({ to: [0, 255, 0] })
           .next({ to: [255, 0, 0] });
