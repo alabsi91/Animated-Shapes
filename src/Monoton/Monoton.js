@@ -225,14 +225,16 @@ export default function Monoton() {
     addUrlQuery({ space: +e.target.value });
   };
 
-  const onDashChange = e => {
+  const onDashChange = async e => {
     isDash.current = e.target.checked;
     addUrlQuery({ isDash: e.target.checked });
     if (!isDash.current) {
       animationsDash.current.forEach(a => a.stop(0));
       animationsDash.current = [];
+      await sleep(50);
       document.querySelectorAll('.Monoton').forEach(e => {
         e.style.removeProperty('stroke-dasharray');
+        e.style.removeProperty('stroke-offset');
       });
     } else setupAnimation();
   };
