@@ -47,11 +47,13 @@ const Card = ({ path }) => {
   };
 
   const onMouseEnter = () => {
+    if (!pngImg.current || !gifImg.current) return;
     pngImg.current.style.display = 'none';
     gifImg.current.style.display = 'block';
   };
 
   const onMouseLeave = () => {
+    if (!pngImg.current || !gifImg.current) return;
     pngImg.current.style.display = 'block';
     gifImg.current.style.display = 'none';
   };

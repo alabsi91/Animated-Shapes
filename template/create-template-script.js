@@ -53,6 +53,14 @@ rl.on('close', async function () {
   const newHomeJs = homeJs.substring(0, index) + card + homeJs.substring(index);
   await writeFile('./src/Home/Home.js', newHomeJs);
 
+  // insert page to index.js
+  const indexJs = await readFile('./src/index.js', 'utf8');
+  const matchLazy = indexJs.match(/const lazyComponents = {/);
+  const matchIndex = matchLazy.index + matchLazy[0].length;
+  const page = `\n  ${name}: lazy(() => import('./${name}/${name}')),`;
+  const newIndexJs = indexJs.substring(0, matchIndex) + page + indexJs.substring(matchIndex);
+  await writeFile('./src/index.js', newIndexJs);
+
   console.log('\nTemplate created successfully.\n'.green);
   process.exit(0);
 });

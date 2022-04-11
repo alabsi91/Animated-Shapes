@@ -2,9 +2,25 @@
 /* eslint-disable no-unused-vars */
 import styles from './Loading.lazy.css';
 import './global.css';
-import { useState, useEffect, Suspense, lazy, createContext, StrictMode, useRef } from 'react';
-import ReactDOM from 'react-dom';
+import { useState, useEffect, Suspense, lazy, createContext, StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 import { animare, ease } from 'animare';
+
+const lazyComponents = {
+  Clock: lazy(() => import('./Clock/Clock')),
+  MultiSidedPolygon: lazy(() => import('./MultiSidedPolygon/MultiSidedPolygon')),
+  Trinity: lazy(() => import('./Trinity/Trinity')),
+  SwirlingLines: lazy(() => import('./SwirlingLines/SwirlingLines')),
+  Cuboid: lazy(() => import('./Cuboid/Cuboid')),
+  Eye: lazy(() => import('./Eye/Eye')),
+  Orbits: lazy(() => import('./Orbits/Orbits')),
+  Squares: lazy(() => import('./Squares/Squares')),
+  Monoton: lazy(() => import('./Monoton/Monoton')),
+  PingPong: lazy(() => import('./PingPong/PingPong')),
+  BouncingShit: lazy(() => import('./BouncingShit/BouncingShit')),
+  Home: lazy(() => import('./Home/Home')),
+  Page404: lazy(() => import('./Page404')),
+};
 
 export const useLazyCss = styles => {
   useEffect(() => {
@@ -46,14 +62,7 @@ const App = () => {
   const [page, setPage] = useState(window.location.pathname.replace('/', '') || 'Home');
 
   const Render = () => {
-    const Component = lazy(() => {
-      try {
-        require(`./${page}/${page}`);
-        return import(`./${page}/${page}`);
-      } catch (e) {
-        return import('./Page404.js');
-      }
-    });
+    const Component = lazyComponents[page] || lazyComponents.Page404;
     return <Component />;
   };
 
@@ -66,18 +75,15 @@ const App = () => {
 
   return (
     <Navigate.Provider value={setPage}>
-      <Suspense fallback={<Loading />}>
-        <Render />
-      </Suspense>
+      <Suspense fallback={<Loading />}>{Render()}</Suspense>
     </Navigate.Provider>
   );
 };
 
-ReactDOM.render(
+createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
-  </StrictMode>,
-  document.getElementById('root')
+  </StrictMode>
 );
 
 export const parseUrl = () => {
