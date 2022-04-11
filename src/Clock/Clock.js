@@ -13,33 +13,34 @@ const getXY = (x, y, angle, length) => [
 export default function Clock() {
   useLazyCss(styles);
 
-  const [count, setCount] = useState(parseUrl().count ?? 20);
+  const [count, setCount] = useState(parseUrl().count ?? 10);
   const [multiplier, setMultiplier] = useState(parseUrl().multiplier ?? 4);
 
   const isRandomColor = useRef(parseUrl().isRandomColor ?? false);
   const isDisco = useRef(parseUrl().isDisco ?? false);
   const isGlowing = useRef(parseUrl().isGlowing ?? false);
-  const easing = useRef(parseUrl().easing ?? 'ease.inOut.quad');
+  const easing = useRef(parseUrl().easing ?? 'ease.in.expo');
   const delay = useRef(parseUrl().delay ?? 10);
-  const duration = useRef(parseUrl().duration ?? 400);
+  const duration = useRef(parseUrl().duration ?? 800);
   const animations = useRef([]);
   const isRgb = useRef(parseUrl().isRgb ?? false);
   const animationsRgb = useRef([]);
   const timer = useRef(null);
 
   const createClocks = () => {
+    const cirlesCount = count * 2 + 2;
     const result = [];
-    const lineLength = 250 / count;
+    const lineLength = 250 / cirlesCount;
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < cirlesCount; i++) {
       const color = generateColor();
-      const lineCount = multiplier * (i + 1);
+      const linesCount = multiplier * (i + 1);
 
       if (i % 2 && i !== 1) {
         const pathes = [];
 
-        for (let point = 0; point < lineCount; point++) {
-          const angle = (360 / lineCount) * point;
+        for (let point = 0; point < linesCount; point++) {
+          const angle = (360 / linesCount) * point;
           const [x1, y1] = getXY(250, 250, angle, lineLength * i);
           const [x2, y2] = getXY(x1, y1, angle, lineLength);
           const [xTo, yTo] = getXY(250, 250, angle, lineLength * (i - 1) - 0.5);
@@ -65,7 +66,7 @@ export default function Clock() {
         }
 
         result.push(
-          <g className='Clock-group' key={Math.random() * 100} style={{ transform: `rotate(${i * multiplier}deg)` }}>
+          <g className='Clock-group' key={Math.random() * 100} style={{ transform: `rotate(${i * 45}deg)` }}>
             {pathes}
           </g>
         );
@@ -84,6 +85,7 @@ export default function Clock() {
       const clocks = clockGroups[g].querySelectorAll('.Clock');
       const animationsGroups = [];
       const animationsGroupsRgb = [];
+
       for (let i = 0; i < clocks.length; i++) {
         const e = clocks[i];
 
@@ -168,13 +170,14 @@ export default function Clock() {
         const b = group?.[i + 1];
         const a_rgb = group_rgb?.[i];
         const b_rgb = group_rgb?.[i + 1];
+
         a?.play();
         a_rgb?.play();
-        animationsRgb?.[i]?.play();
+
         if (d) await a?.asyncOnProgress(d);
+
         b?.play();
         b_rgb?.play();
-        animationsRgb?.[i + 1]?.play();
       }
     };
     for (let g = 0; g < animations.current.length; g++) {
