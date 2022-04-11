@@ -14,7 +14,7 @@ export default function Clock() {
   useLazyCss(styles);
 
   const [count, setCount] = useState(parseUrl().count ?? 10);
-  const [multiplier, setMultiplier] = useState(parseUrl().multiplier ?? 4);
+  const [multiplier, setMultiplier] = useState(parseUrl().multiplier ?? 6);
 
   const isRandomColor = useRef(parseUrl().isRandomColor ?? false);
   const isDisco = useRef(parseUrl().isDisco ?? false);
@@ -34,16 +34,15 @@ export default function Clock() {
 
     for (let i = 0; i < cirlesCount; i++) {
       const color = generateColor();
-      const linesCount = multiplier * (i + 1);
-
+      const pathes = [];
       if (i % 2 && i !== 1) {
-        const pathes = [];
+        const linesCount = multiplier * (i - 1);
 
         for (let point = 0; point < linesCount; point++) {
           const angle = (360 / linesCount) * point;
           const [x1, y1] = getXY(250, 250, angle, lineLength * i);
           const [x2, y2] = getXY(x1, y1, angle, lineLength);
-          const [xTo, yTo] = getXY(250, 250, angle, lineLength * (i - 1) - 0.5);
+          const [xTo, yTo] = getXY(250, 250, angle, lineLength * (i - 1));
 
           pathes.push(
             <path
@@ -66,7 +65,15 @@ export default function Clock() {
         }
 
         result.push(
-          <g className='Clock-group' key={Math.random() * 100} style={{ transform: `rotate(${i * 45}deg)` }}>
+          <g
+            className='Clock-group'
+            key={Math.random() * 100}
+            style={
+              {
+                transform: `rotate(${i * 45}deg)`,
+              }
+            }
+          >
             {pathes}
           </g>
         );
@@ -170,7 +177,6 @@ export default function Clock() {
         const b = group?.[i + 1];
         const a_rgb = group_rgb?.[i];
         const b_rgb = group_rgb?.[i + 1];
-
         a?.play();
         a_rgb?.play();
 

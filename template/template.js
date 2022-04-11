@@ -31,7 +31,7 @@ export default function SSSSS() {
       result.push(
         <circle
           className='SSSSS'
-          key={'SSSSS' + i}
+          key={Math.random() * 100}
           cx='50%'
           cy='50%'
           r={0}

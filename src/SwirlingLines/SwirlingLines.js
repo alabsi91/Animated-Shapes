@@ -46,7 +46,7 @@ export default function SwirlingLines() {
       result.push(
         <path
           className='SwirlingLines'
-          key={'SwirlingLines' + i}
+          key={Math.random() * 100}
           d={xy.join(' ')}
           style={{
             stroke: isRandomColor.current ? color : null,
@@ -107,7 +107,7 @@ export default function SwirlingLines() {
           {
             to: length,
             duration: duration_custom * 7,
-            delay: delay_custom,
+            delay: i* delay.current,
             autoPlay: false,
             ease: getEase,
           },
@@ -165,6 +165,7 @@ export default function SwirlingLines() {
     for (let i = 0; i < count; i++) {
       animations.current[i]?.setOptions({ delay: i * delay.current });
       animationsRgb.current[i]?.setOptions({ delay: i * delay.current });
+      animationsDash.current[i]?.setOptions({ delay: i * delay.current });
       animations.current[i]?.play();
       animationsDash.current[i]?.play();
       animationsRgb.current?.[i]?.play();

@@ -19,9 +19,9 @@ export default function Home() {
       <Card path='Eye' />
       <Card path='Orbits' />
       <Card path='Squares' />
+      <Card path='Monoton' />
       <Card path='PingPong' />
       <Card path='BouncingShit' />
-      <Card path='Monoton' />
     </div>
   );
 }
