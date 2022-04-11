@@ -1,9 +1,4 @@
 body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100vw;
-  min-height: 100vh;
   overflow-x: hidden;
 
   --zoom: 20%;
@@ -31,6 +26,12 @@ body {
 }
 
 .container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  min-height: 100vh;
   text-align: center;
 }
 .container :last-child {
