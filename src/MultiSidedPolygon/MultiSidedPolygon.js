@@ -211,6 +211,7 @@ export default function MultiSidedPolygon() {
   };
 
   const onSidesChange = e => {
+
     setSides(+e.target.value);
     addUrlQuery({ sides: +e.target.value });
   };
@@ -421,7 +422,7 @@ export default function MultiSidedPolygon() {
             className='inputs'
             type='number'
             min={1}
-            max={500}
+            max={150}
             name='MultiSidedPolygon-count'
             value={count}
             onChange={onCountChange}

@@ -9,6 +9,7 @@ export default function PingPong() {
 
   const [play, setAnimation] = useState();
   const isRunning = useRef(false);
+  const timer = useRef();
 
   const random = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
@@ -36,7 +37,8 @@ export default function PingPong() {
       duration,
       autoPlay: false,
     };
-    const toPaddleCb = ([x, y], { isLastFrame }) => {
+    const toPaddleCb = ([x, y], { isLastFrame, pause }) => {
+      if (!document.body.contains(ball)) pause();
       ball.style.left = x + 'px';
       ball.style.top = y + 'px';
       if (collisionDetection()) onCollision(x, y);
@@ -89,7 +91,8 @@ export default function PingPong() {
       duration,
       autoPlay: false,
     };
-    const toWallCb = ([x, y], { isLastFrame }) => {
+    const toWallCb = ([x, y], { isLastFrame, pause }) => {
+      if (!document.body.contains(ball)) pause();
       ball.style.left = x + 'px';
       ball.style.top = y + 'px';
       if (isLastFrame) {
@@ -101,7 +104,8 @@ export default function PingPong() {
     };
     const toWall = animare(toWallOptions, toWallCb);
 
-    const wallPaddleCb = ([y], { isLastFrame }) => {
+    const wallPaddleCb = ([y], { isLastFrame, pause }) => {
+      if (!document.body.contains(ball)) pause();
       wall.style.marginTop = y - wallHeight / 2 + 'px';
       if (isLastFrame) wallLastPosition = y;
     };
@@ -109,7 +113,7 @@ export default function PingPong() {
 
     setAnimation(toPaddle);
 
-    setInterval(() => {
+    timer.current = setInterval(() => {
       if (duration < 200 || !isRunning.current) return;
       duration -= 50;
       toPaddle.setOptions({ duration });
@@ -129,6 +133,7 @@ export default function PingPong() {
 
     return () => {
       window.removeEventListener('mousemove', movePaddle);
+      clearInterval(timer.current);
     };
   }, []);
 

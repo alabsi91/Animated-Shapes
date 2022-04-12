@@ -7,9 +7,6 @@ canvas {
   position: absolute;
   top: 50px;
   left: 0;
-  /* background-color: #000000; */
-  /* display: none; */
-  /* background-color: #565656 !important; */
   cursor: none;
 }
 
@@ -47,7 +44,15 @@ img {
   text-align: center;
 }
 
-label {
+label[for='size'], label[for='amount'] {
+  color: white;
+  font-weight: bold;
+  margin: 10px;
+  margin-right: 0px;
+  padding: 10px;
+}
+
+label[for='uploadBg']  {
   color: white;
   font-weight: bold;
   margin: 10px;
