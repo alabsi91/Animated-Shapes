@@ -21,6 +21,7 @@ export default function Home() {
       <Card path='Squares' />
       <Card path='Monoton' />
       <Card path='PingPong' />
+      <GameOfLife />
       <Card path='BouncingShit' />
     </div>
   );
@@ -34,7 +35,7 @@ const Card = ({ path }) => {
   const [gifUrl, setGifUrl] = useState('');
   const setPage = useContext(Navigate);
 
-  const navigate = e => {
+  const navigate = () => {
     setPage(path);
     window.history.pushState({}, '', `/${path}`);
   };
@@ -67,6 +68,34 @@ const Card = ({ path }) => {
     <div className='card-container' onClick={navigate} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <img ref={pngImg} src={pngUrl} alt={path} />
       <img ref={gifImg} src={gifUrl} alt={path} style={{ display: 'none' }} />
+    </div>
+  );
+};
+
+const GameOfLife = () => {
+  let pngImg = useRef();
+  let gifImg = useRef();
+
+  const navigate = () => {
+    window.open('https://game-of-life-canvas-edition.netlify.app/', '_self');
+  };
+
+  const onMouseEnter = () => {
+    if (!pngImg.current || !gifImg.current) return;
+    pngImg.current.style.display = 'none';
+    gifImg.current.style.display = 'block';
+  };
+
+  const onMouseLeave = () => {
+    if (!pngImg.current || !gifImg.current) return;
+    pngImg.current.style.display = 'block';
+    gifImg.current.style.display = 'none';
+  };
+
+  return (
+    <div className='card-container' onClick={navigate} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      <img ref={pngImg} src={require('../assets/gameOfLife.webp')} alt='gameOfLife' />
+      <img ref={gifImg} src={require('../assets/gameOfLife.gif')} alt='gameOfLife' style={{ display: 'none' }} />
     </div>
   );
 };
