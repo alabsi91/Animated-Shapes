@@ -18,7 +18,7 @@ export default function Home() {
       <Card path='Cuboid' />
       <Card path='Eye' />
       <Card path='Orbits' />
-      <Card path='Squares' />
+      <Card path='Tunnel' />
       <Card path='Monoton' />
       <Card path='PingPong' />
       <GameOfLife />
