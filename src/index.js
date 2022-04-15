@@ -114,3 +114,32 @@ export const addUrlQuery = obj => {
 };
 
 export const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+const randomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const hslToHex = (h, s, l) => {
+  l /= 100;
+  const a = (s * Math.min(l, 1 - l)) / 100;
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color)
+      .toString(16)
+      .padStart(2, '0'); // convert to Hex and prefix "0" if needed
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+};
+
+export const generateColor = () => {
+  const h = randomNumber(50, 360);
+  const s = randomNumber(50, 100);
+  return hslToHex(h, s, 50);
+};
+
+export const invertColor = color => {
+  const rgb = color.match(/\d+/g);
+  const r = 255 - rgb[0];
+  const g = 255 - rgb[1];
+  const b = 255 - rgb[2];
+  return `rgb(${r},${g},${b})`;
+};

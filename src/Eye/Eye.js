@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { addUrlQuery, parseUrl, useLazyCss, sleep } from '..';
+import { addUrlQuery, parseUrl, useLazyCss, sleep, invertColor, generateColor } from '..';
 import styles from './Eye.lazy.css';
 
 export default function Eye() {
@@ -14,7 +14,7 @@ export default function Eye() {
   const isDisco = useRef(parseUrl().isDisco ?? false);
   const isGlowing = useRef(parseUrl().isGlowing ?? false);
   const easing = useRef(parseUrl().easing ?? 'ease.inOut.quad');
-  const delay = useRef(parseUrl().delay ?? 200);
+  const delay = useRef(parseUrl().delay ?? 100);
   const duration = useRef(parseUrl().duration ?? 3000);
   const rotateY = useRef(parseUrl().rotateY ?? false);
   const isAnimation = useRef(parseUrl().isAnimation ?? true);
@@ -63,11 +63,10 @@ export default function Eye() {
       const e = Eyes[i];
 
       if (isAnimation.current) {
-        const callback = ([r, rotate], { pause, progress, setOptions }) => {
+        const callback = ([r, rotate], { pause }) => {
           if (!document.body.contains(e)) pause();
           e.setAttribute('r', r);
           e.style.transform = `rotateY(${rotateY.current ? rotate : 0}deg) rotateX(${rotateY.current ? 0 : rotate}deg)`;
-          if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
         };
 
         const a = animare(
@@ -76,6 +75,7 @@ export default function Eye() {
             to: [(i + 1) * (235 / count) * 0.7, 180],
             duration: duration.current,
             delay: i * delay.current,
+            delayOnce: true,
             repeat: -1,
             autoPlay: false,
             direction: 'alternate',
@@ -100,7 +100,8 @@ export default function Eye() {
           {
             to: circumference,
             duration: duration.current,
-            delay: i * delay.current,
+            delay: i * delay.current * 2,
+            delayOnce: true,
             autoPlay: false,
             ease: getEase,
           },
@@ -111,17 +112,23 @@ export default function Eye() {
       }
 
       if (isRgb.current) {
-        const callback_color = ([r, g, b], { pause, progress, setOptions }) => {
+        const callback_color = ([r, g, b], { pause }) => {
           if (!document.body.contains(e)) pause();
           e.style.stroke = `rgb(${r},${g},${b})`;
           isGlowing.current
             ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
             : e.style.removeProperty('filter');
-          if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
         };
 
         const a_rgb = animare(
-          { from: [255, 0, 0], to: [0, 0, 255], duration: 2000, delay: i * delay.current, autoPlay: false },
+          {
+            from: [255, 0, 0],
+            to: [0, 0, 255],
+            duration: 2000,
+            delay: i * delay.current,
+            delayOnce: true,
+            autoPlay: false,
+          },
           callback_color
         )
           .next({ to: [0, 255, 0] })
@@ -157,10 +164,7 @@ export default function Eye() {
   };
 
   const play = () => {
-    for (let i = 0; i < count; i++) {
-      animations.current[i]?.setOptions({ delay: i * delay.current });
-      animationsRgb.current[i]?.setOptions({ delay: i * delay.current });
-      animationsDash.current[i]?.setOptions({ delay: i * delay.current });
+    for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.play();
       animationsRgb.current?.[i]?.play();
       animationsDash.current?.[i]?.play();
@@ -168,7 +172,7 @@ export default function Eye() {
   };
 
   const stop = () => {
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.stop(0);
       animationsRgb.current?.[i]?.stop(0);
       animationsDash.current?.[i]?.stop(0);
@@ -402,15 +406,7 @@ export default function Eye() {
           <label className='labels' htmlFor='Eye-count'>
             Circles Count:
           </label>
-          <input
-            className='inputs'
-            type='number'
-            min={1}
-            max={100}
-            name='Eye-count'
-            value={count}
-            onChange={onCountChange}
-          />
+          <input className='inputs' type='number' min={1} max={100} name='Eye-count' value={count} onChange={onCountChange} />
 
           <label className='labels' htmlFor='Eye-stroke-width'>
             Stroke width:
@@ -609,29 +605,3 @@ export default function Eye() {
     </>
   );
 }
-
-const randomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-const hslToHex = (h, s, l) => {
-  l /= 100;
-  const a = (s * Math.min(l, 1 - l)) / 100;
-  const f = n => {
-    const k = (n + h / 30) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color)
-      .toString(16)
-      .padStart(2, '0'); // convert to Hex and prefix "0" if needed
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
-};
-const generateColor = () => {
-  const h = randomNumber(50, 360);
-  const s = randomNumber(50, 100);
-  return hslToHex(h, s, 50);
-};
-const invertColor = color => {
-  const rgb = color.match(/\d+/g);
-  const r = 255 - rgb[0];
-  const g = 255 - rgb[1];
-  const b = 255 - rgb[2];
-  return `rgb(${r},${g},${b})`;
-};

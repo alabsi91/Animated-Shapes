@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { addUrlQuery, parseUrl, useLazyCss, sleep } from '..';
+import { addUrlQuery, parseUrl, useLazyCss, sleep, invertColor, generateColor } from '..';
 import styles from './Orbits.lazy.css';
 
 export default function Orbits() {
@@ -24,6 +24,7 @@ export default function Orbits() {
   const animationsRgb = useRef([]);
   const isDash = useRef(parseUrl().isDash ?? false);
   const animationsDash = useRef([]);
+  const rotateAnimation = useRef(null);
   const timer = useRef(null);
 
   const createOrbitss = () => {
@@ -63,22 +64,31 @@ export default function Orbits() {
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
-    animare({ to: 360, repeat: -1, duration: 10000 }, ([r]) => {
-      svg.style.transform = `rotate(${r}deg)`;
-    });
+    if (!rotateAnimation.current) {
+      animare({ to: 360, repeat: -1, duration: 10000 }, ([r]) => {
+        svg.style.transform = `rotate(${r}deg)`;
+      });
+    }
 
     for (let i = 0; i < Orbitss.length; i++) {
       const e = Orbitss[i];
 
       if (isAnimation.current) {
-        const callback = ([r], { pause, progress, setOptions }) => {
+        const callback = ([r], { pause }) => {
           if (!document.body.contains(e)) pause();
           e.style.transform = `rotate(${i * angle}deg) rotateX(${r}deg)`;
-          // if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
         };
 
         const a = animare(
-          { to: 360, duration: duration.current, delay: i * delay.current, repeat: -1, autoPlay: false, ease: getEase },
+          {
+            to: 360,
+            duration: duration.current,
+            delay: i * delay.current,
+            delayOnce: true,
+            repeat: -1,
+            autoPlay: false,
+            ease: getEase,
+          },
           callback
         );
         animations.current.push(a);
@@ -98,27 +108,33 @@ export default function Orbits() {
             to: length,
             duration: duration.current / 2,
             delay: i * delay.current,
+            delayOnce: true,
             autoPlay: false,
             ease: getEase,
-            direction: i < count / 2 ? 'reverse' : 'normal',
           },
           callback
-        ).next({ from: -length, to: 0, direction: i < count / 2 ? 'reverse' : 'normal' });
+        ).next({ from: -length, to: 0 });
         a_dash.setTimelineOptions({ repeat: -1 });
         animationsDash.current.push(a_dash);
       }
 
       if (isRgb.current) {
-        const callback_color = ([r, g, b], { pause, progress, setOptions }) => {
+        const callback_color = ([r, g, b], { pause }) => {
           if (!document.body.contains(e)) pause();
           e.style.stroke = `rgb(${r},${g},${b})`;
           isGlowing.current
             ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
             : e.style.removeProperty('filter');
-          if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
         };
         const a_rgb = animare(
-          { from: [255, 0, 0], to: [0, 0, 255], duration: 2000, delay: i * delay.current, autoPlay: false },
+          {
+            from: [255, 0, 0],
+            to: [0, 0, 255],
+            duration: 2000,
+            delay: i * delay.current,
+            delayOnce: true,
+            autoPlay: false,
+          },
           callback_color
         )
           .next({ to: [0, 255, 0] })
@@ -154,10 +170,7 @@ export default function Orbits() {
   };
 
   const play = () => {
-    for (let i = 0; i < count; i++) {
-      animations.current[i]?.setOptions({ delay: i * delay.current });
-      animationsDash.current[i]?.setOptions({ delay: i * delay.current });
-      animationsRgb.current[i]?.setOptions({ delay: i * delay.current });
+    for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.play();
       animationsDash.current[i]?.play();
       animationsRgb.current?.[i]?.play();
@@ -165,7 +178,7 @@ export default function Orbits() {
   };
 
   const stop = () => {
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.stop(0);
       animationsDash.current?.[i]?.stop(0);
       animationsRgb.current?.[i]?.stop(0);
@@ -625,29 +638,3 @@ export default function Orbits() {
     </>
   );
 }
-
-const randomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-const hslToHex = (h, s, l) => {
-  l /= 100;
-  const a = (s * Math.min(l, 1 - l)) / 100;
-  const f = n => {
-    const k = (n + h / 30) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color)
-      .toString(16)
-      .padStart(2, '0'); // convert to Hex and prefix "0" if needed
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
-};
-const generateColor = () => {
-  const h = randomNumber(50, 360);
-  const s = randomNumber(50, 100);
-  return hslToHex(h, s, 50);
-};
-const invertColor = color => {
-  const rgb = color.match(/\d+/g);
-  const r = 255 - rgb[0];
-  const g = 255 - rgb[1];
-  const b = 255 - rgb[2];
-  return `rgb(${r},${g},${b})`;
-};

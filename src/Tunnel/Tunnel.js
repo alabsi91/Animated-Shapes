@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { addUrlQuery, parseUrl, useLazyCss, sleep } from '..';
+import { addUrlQuery, parseUrl, useLazyCss, sleep, invertColor, generateColor } from '..';
 import styles from './Tunnel.lazy.css';
 
 export default function Tunnel() {
@@ -15,7 +15,7 @@ export default function Tunnel() {
   const isDisco = useRef(parseUrl().isDisco ?? false);
   const isGlowing = useRef(parseUrl().isGlowing ?? false);
   const easing = useRef(parseUrl().easing ?? 'ease.inOut.quad');
-  const delay = useRef(parseUrl().delay ?? 50);
+  const delay = useRef(parseUrl().delay ?? 100);
   const duration = useRef(parseUrl().duration ?? 2000);
   const isAnimation = useRef(parseUrl().isAnimation ?? true);
   const animations = useRef([]);
@@ -38,8 +38,8 @@ export default function Tunnel() {
           key={Math.random() * 100}
           x={x}
           y={y}
-          width={width}
-          height={height}
+          width={width < 0 ? 0 : width}
+          height={height< 0 ? 0 : height}
           style={{
             stroke: isRandomColor.current ? color : null,
             filter:
@@ -57,7 +57,7 @@ export default function Tunnel() {
 
   const createAnimations = () => {
     let Tunnels = [...document.querySelectorAll('.Tunnel')];
-    if (reverse) Tunnels = Tunnels.reverse();
+    if (!reverse) Tunnels = Tunnels.reverse();
 
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
@@ -71,10 +71,11 @@ export default function Tunnel() {
         const winWidth = window.innerWidth;
         const winHeight = window.innerHeight;
         const gap = (window.innerHeight - 200) / count;
+
         const callback = ([w, h], { pause }) => {
           if (!document.body.contains(e)) pause();
-          e.setAttribute('width', w);
-          e.setAttribute('height', h);
+          e.setAttribute('width', w < 0 ? 0 : w);
+          e.setAttribute('height', h < 0 ? 0 : h);
           e.setAttribute('x', winWidth / 2 - w / 2);
           e.setAttribute('y', winHeight / 2 - h / 2);
         };
@@ -84,7 +85,8 @@ export default function Tunnel() {
             from: [width, height],
             to: [winWidth / 2 + gap * (i + 1), 100 + gap * i],
             duration: duration.current,
-
+            delay: delay.current * i,
+            delayOnce: true,
             autoPlay: false,
             ease: getEase,
           },
@@ -113,6 +115,8 @@ export default function Tunnel() {
           {
             from: [255, 0, 0],
             to: [0, 0, 255],
+            delay: delay.current * i,
+            delayOnce: true,
             duration: 2000,
             autoPlay: false,
           },
@@ -149,22 +153,15 @@ export default function Tunnel() {
     }
   };
 
-  const play = async () => {
-    for (let i = 0; i < count; i++) {
-      const a = animations.current?.[i];
-      const b = animations.current?.[i + 1];
-      const a_rgb = animationsRgb.current?.[i];
-      const b_rgb = animationsRgb.current?.[i + 1];
-      a?.play();
-      a_rgb?.play();
-      await a.asyncOnProgress(delay.current);
-      b?.play();
-      b_rgb?.play();
+  const play = () => {
+    for (let i = 0; i < animations.current.length; i++) {
+      animations.current?.[i]?.play();
+      animationsRgb.current?.[i]?.play();
     }
   };
 
   const stop = () => {
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.stop(0);
       animationsRgb.current?.[i]?.stop(0);
     }
@@ -579,29 +576,3 @@ export default function Tunnel() {
     </>
   );
 }
-
-const randomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-const hslToHex = (h, s, l) => {
-  l /= 100;
-  const a = (s * Math.min(l, 1 - l)) / 100;
-  const f = n => {
-    const k = (n + h / 30) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color)
-      .toString(16)
-      .padStart(2, '0'); // convert to Hex and prefix "0" if needed
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
-};
-const generateColor = () => {
-  const h = randomNumber(50, 360);
-  const s = randomNumber(50, 100);
-  return hslToHex(h, s, 50);
-};
-const invertColor = color => {
-  const rgb = color.match(/\d+/g);
-  const r = 255 - rgb[0];
-  const g = 255 - rgb[1];
-  const b = 255 - rgb[2];
-  return `rgb(${r},${g},${b})`;
-};

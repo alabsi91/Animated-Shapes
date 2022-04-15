@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { addUrlQuery, parseUrl, useLazyCss, sleep } from '..';
+import { addUrlQuery, parseUrl, useLazyCss, sleep, invertColor, generateColor } from '..';
 import styles from './Clock.lazy.css';
 
 const getXY = (x, y, angle, length) => [
@@ -19,8 +19,8 @@ export default function Clock() {
   const isRandomColor = useRef(parseUrl().isRandomColor ?? false);
   const isDisco = useRef(parseUrl().isDisco ?? false);
   const isGlowing = useRef(parseUrl().isGlowing ?? false);
-  const easing = useRef(parseUrl().easing ?? 'ease.in.expo');
-  const delay = useRef(parseUrl().delay ?? 10);
+  const easing = useRef(parseUrl().easing ?? 'ease.in.quad');
+  const delay = useRef(parseUrl().delay ?? 50);
   const duration = useRef(parseUrl().duration ?? 800);
   const animations = useRef([]);
   const isRgb = useRef(parseUrl().isRgb ?? false);
@@ -68,11 +68,9 @@ export default function Clock() {
           <g
             className='Clock-group'
             key={Math.random() * 100}
-            style={
-              {
-                transform: `rotate(${i * 45}deg)`,
-              }
-            }
+            style={{
+              transform: `rotate(${i * 45}deg)`,
+            }}
           >
             {pathes}
           </g>
@@ -90,8 +88,6 @@ export default function Clock() {
 
     for (let g = 0; g < clockGroups.length; g++) {
       const clocks = clockGroups[g].querySelectorAll('.Clock');
-      const animationsGroups = [];
-      const animationsGroupsRgb = [];
 
       for (let i = 0; i < clocks.length; i++) {
         const e = clocks[i];
@@ -108,13 +104,15 @@ export default function Clock() {
             from,
             to,
             duration: duration.current,
+            delay: delay.current * i + g * delay.current,
+            delayOnce: true,
             autoPlay: false,
             ease: getEase,
           },
           callback
         ).next({ to: from });
         a.setTimelineOptions({ repeat: -1 });
-        animationsGroups.push(a);
+        animations.current.push(a);
 
         if (isRgb.current) {
           const callback_color = ([r, g, b], { pause }) => {
@@ -129,6 +127,8 @@ export default function Clock() {
               from: [255, 0, 0],
               to: [0, 0, 255],
               duration: 2000,
+              delay: delay.current * i + g * delay.current,
+              delayOnce: true,
               autoPlay: false,
             },
             callback_color
@@ -136,11 +136,9 @@ export default function Clock() {
             .next({ to: [0, 255, 0] })
             .next({ to: [255, 0, 0] });
           a_rgb.setTimelineOptions({ repeat: -1 });
-          animationsGroupsRgb.push(a_rgb);
+          animationsRgb.current.push(a_rgb);
         }
       }
-      animations.current.push(animationsGroups);
-      if (isRgb.current) animationsRgb.current.push(animationsGroupsRgb);
     }
     play();
   };
@@ -167,40 +165,17 @@ export default function Clock() {
     }
   };
 
-  const play = async () => {
-    const d = delay.current;
-    const p = async g => {
-      const group = animations.current?.[g];
-      const group_rgb = animationsRgb.current?.[g];
-      for (let i = 0; i < group.length; i++) {
-        const a = group?.[i];
-        const b = group?.[i + 1];
-        const a_rgb = group_rgb?.[i];
-        const b_rgb = group_rgb?.[i + 1];
-        a?.play();
-        a_rgb?.play();
-
-        if (d) await a?.asyncOnProgress(d);
-
-        b?.play();
-        b_rgb?.play();
-      }
-    };
-    for (let g = 0; g < animations.current.length; g++) {
-      p(g);
-      if (d) await sleep(d);
+  const play = () => {
+    for (let i = 0; i < animations.current.length; i++) {
+      animations.current[i]?.play();
+      animationsRgb.current?.[i]?.play();
     }
   };
 
   const stop = () => {
-    for (let g = 0; g < animations.current.length; g++) {
-      const group = animations?.current?.[g];
-      const group_rgb = animationsRgb?.current?.[g];
-
-      for (let i = 0; i < group?.length; i++) {
-        group?.[i]?.stop(0);
-        group_rgb?.[i]?.stop(0);
-      }
+    for (let i = 0; i < animations.current.length; i++) {
+      animations.current[i]?.stop(0);
+      animationsRgb.current?.[i]?.stop(0);
     }
   };
 
@@ -286,9 +261,9 @@ export default function Clock() {
       });
       setupAnimation();
     } else {
-      animationsRgb.current.forEach(group => group.forEach(a => a?.stop(0)));
+      animationsRgb.current.forEach(a => a?.stop(0));
       animationsRgb.current = [];
-      await sleep(200);
+      await sleep(100);
       document.querySelectorAll('.Clock').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
@@ -615,29 +590,3 @@ export default function Clock() {
     </>
   );
 }
-
-const randomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-const hslToHex = (h, s, l) => {
-  l /= 100;
-  const a = (s * Math.min(l, 1 - l)) / 100;
-  const f = n => {
-    const k = (n + h / 30) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color)
-      .toString(16)
-      .padStart(2, '0'); // convert to Hex and prefix "0" if needed
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
-};
-const generateColor = () => {
-  const h = randomNumber(50, 360);
-  const s = randomNumber(50, 100);
-  return hslToHex(h, s, 50);
-};
-const invertColor = color => {
-  const rgb = color.match(/\d+/g);
-  const r = 255 - rgb[0];
-  const g = 255 - rgb[1];
-  const b = 255 - rgb[2];
-  return `rgb(${r},${g},${b})`;
-};

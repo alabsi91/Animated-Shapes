@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { addUrlQuery, parseUrl, sleep, useLazyCss } from '..';
+import { addUrlQuery, parseUrl, sleep, useLazyCss, invertColor, generateColor } from '..';
 import styles from './Trinity.lazy.css';
 
 export default function Trinity() {
@@ -78,10 +78,9 @@ export default function Trinity() {
       e.style.strokeDasharray = length / 3 + 'px';
 
       if (isAnimation.current) {
-        const callback = ([o], { pause, progress, setOptions }) => {
+        const callback = ([o], { pause }) => {
           if (!document.body.contains(e)) pause();
           e.style.strokeDashoffset = o + 'px';
-          // if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
         };
 
         const a = animare(
@@ -93,16 +92,22 @@ export default function Trinity() {
       }
 
       if (isRgb.current) {
-        const callback_color = ([r, g, b], { pause, progress, setOptions }) => {
+        const callback_color = ([r, g, b], { pause }) => {
           if (!document.body.contains(e)) pause();
           e.style.stroke = `rgb(${r},${g},${b})`;
           isGlowing.current
             ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
             : e.style.removeProperty('filter');
-          if (progress === 100) setOptions({ delay: (count - 1 - i) * delay.current + i * delay.current });
         };
         const a_rgb = animare(
-          { from: [255, 0, 0], to: [0, 0, 255], duration: 4000, delay: i * delay.current, autoPlay: false },
+          {
+            from: [255, 0, 0],
+            to: [0, 0, 255],
+            duration: 4000,
+            delay: i * delay.current,
+            delayOnce: true,
+            autoPlay: false,
+          },
           callback_color
         )
           .next({ to: [0, 255, 0] })
@@ -137,16 +142,15 @@ export default function Trinity() {
   };
 
   const play = () => {
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.setOptions({ delay: i * delay.current });
-      animationsRgb.current[i]?.setOptions({ delay: i * delay.current });
       animations.current[i].play();
       animationsRgb.current?.[i]?.play();
     }
   };
 
   const stop = () => {
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.stop(0);
       animationsRgb.current?.[i]?.stop(0);
     }
@@ -567,28 +571,3 @@ export default function Trinity() {
   );
 }
 
-const randomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-const hslToHex = (h, s, l) => {
-  l /= 100;
-  const a = (s * Math.min(l, 1 - l)) / 100;
-  const f = n => {
-    const k = (n + h / 30) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color)
-      .toString(16)
-      .padStart(2, '0'); // convert to Hex and prefix "0" if needed
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
-};
-const generateColor = () => {
-  const h = randomNumber(50, 360);
-  const s = randomNumber(50, 100);
-  return hslToHex(h, s, 50);
-};
-const invertColor = color => {
-  const rgb = color.match(/\d+/g);
-  const r = 255 - rgb[0];
-  const g = 255 - rgb[1];
-  const b = 255 - rgb[2];
-  return `rgb(${r},${g},${b})`;
-};
