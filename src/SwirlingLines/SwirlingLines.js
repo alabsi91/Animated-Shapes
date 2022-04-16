@@ -49,7 +49,7 @@ export default function SwirlingLines() {
           key={Math.random() * 100}
           d={xy.join(' ')}
           style={{
-            stroke: isRandomColor.current ? color : null,
+            stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
             filter:
               isGlowing.current && isRandomColor.current
                 ? `drop-shadow(0px 0px var(--glow-trength) ${color})`

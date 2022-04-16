@@ -28,11 +28,11 @@ export default function Clock() {
   const timer = useRef(null);
 
   const createClocks = () => {
-    const cirlesCount = count * 2 + 2;
+    const circlesCount = count * 2 + 2;
     const result = [];
-    const lineLength = 250 / cirlesCount;
+    const lineLength = 250 / circlesCount;
 
-    for (let i = 0; i < cirlesCount; i++) {
+    for (let i = 0; i < circlesCount; i++) {
       const color = generateColor();
       const pathes = [];
       if (i % 2 && i !== 1) {
@@ -52,7 +52,7 @@ export default function Clock() {
               data-to={[xTo, yTo, x1, y1]}
               d={`M ${x1} ${y1} L ${x2} ${y2}`}
               style={{
-                stroke: isRandomColor.current ? color : null,
+                stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
                 filter:
                   isGlowing.current && isRandomColor.current
                     ? `drop-shadow(0px 0px var(--glow-trength) ${color})`

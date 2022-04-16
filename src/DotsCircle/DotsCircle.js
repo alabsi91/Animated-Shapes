@@ -2,118 +2,155 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { addUrlQuery, parseUrl, sleep, useLazyCss, invertColor, generateColor } from '..';
-import styles from './Trinity.lazy.css';
+import { addUrlQuery, parseUrl, useLazyCss, sleep, invertColor, generateColor } from '..';
+import styles from './DotsCircle.lazy.css';
 
-export default function Trinity() {
+export default function DotsCircle() {
   useLazyCss(styles);
 
-  const [count, setCount] = useState(parseUrl().count ?? 10);
+  const [count, setCount] = useState(parseUrl().count ?? 15);
+  const [dotGap, setDotGap] = useState(parseUrl().dotGap ?? 3);
 
   const isRandomColor = useRef(parseUrl().isRandomColor ?? false);
   const isDisco = useRef(parseUrl().isDisco ?? false);
   const isGlowing = useRef(parseUrl().isGlowing ?? false);
-  const easing = useRef(parseUrl().easing ?? 'ease.inOut.quad');
-  const delay = useRef(parseUrl().delay ?? 150);
-  const duration = useRef(parseUrl().duration ?? 4000);
+  const easing = useRef(parseUrl().easing ?? 'linear');
+  const delay = useRef(parseUrl().delay ?? 50);
+  const duration = useRef(parseUrl().duration ?? 5000);
   const isAnimation = useRef(parseUrl().isAnimation ?? true);
   const animations = useRef([]);
-  const isRotating = useRef(parseUrl().isRotating ?? false);
-  const animationsRotate = useRef(null);
   const isRgb = useRef(parseUrl().isRgb ?? false);
   const animationsRgb = useRef([]);
+  const isRotating = useRef(parseUrl().isRotating ?? false);
+  const animationsRotate = useRef(null);
   const timer = useRef(null);
 
-  const createTrinitys = () => {
-    const smallest = 0.5;
-    const largest = 1.2;
-    const result = [];
-    for (let i = 0; i < count; i++) {
-      const calc = ((smallest + 1) / count) * (i + 1);
-      const x = 62.44 * largest * (calc <= smallest ? (smallest - calc) * -1 : calc - smallest);
-      const y = 42.7 * largest * (calc <= smallest ? (smallest - calc) * -1 : calc - smallest);
+  const getXY = (x, y, angle, length) => [
+    +(x + Math.cos((Math.PI * angle) / 180) * length).toFixed(2),
+    +(y + Math.sin((Math.PI * angle) / 180) * length).toFixed(2),
+  ];
 
-      const color = generateColor();
+  const createDotsCircles = () => {
+    const circlesCount = count * 2;
+    const dotRadius = 500 / circlesCount / 4;
+    const result = [];
+
+    for (let i = 0; i < circlesCount; i++) {
+      const circleRadius = dotRadius * 2 * i;
+      const Circumference = 2 * Math.PI * circleRadius;
+      const dotsCount = Math.floor(Circumference / ((dotRadius + dotGap) * 2));
+      const dots = [];
+      if (i % 2) {
+        for (let d = 0; d < dotsCount; d++) {
+          const color = generateColor();
+          const angle = (360 / dotsCount) * d;
+          const xy = getXY(250, 250, angle, circleRadius);
+          dots.push(
+            <circle
+              className='DotsCircle'
+              key={Math.random() * 100}
+              cx={xy[0]}
+              cy={xy[1]}
+              r={dotRadius}
+              style={{
+                fill: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+                filter:
+                  isGlowing.current && isRandomColor.current
+                    ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
+                    : isGlowing.current
+                    ? `drop-shadow(0px 0px var(--glow-trength) var(--fill-color))`
+                    : null,
+              }}
+            />
+          );
+        }
+      }
+
       result.push(
-        <path
-          className='Trinity'
-          key={'Trinity' + i}
-          d={`M${422.56 + x},${398.39 + y}c${-35.72 + x / 2},${-184.08 - y * 2.9},${-309.44 - x * 2.5},${-183.99 - y * 2.9},${
-            -345.12 - x * 2
-          },${0}c${177.29 + x * 1.6},${61.08 + y * 2.15},${314.04 + x * 2.9},${-176 - y * 2},${172.57 + x},${
-            -298.92 - y * 2.53
-          }C${108.46 - x * 2},${222.44 - y * 0.8},${245.37 - x * 0.45},${459.46 + y * 3.1},${422.56 + x},${398.39 + y}z`}
+        <g
+          className='DotsCircle-group'
+          key={Math.random() * 100}
           style={{
-            stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
-            filter:
-              isGlowing.current && isRandomColor.current
-                ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
-                : isGlowing.current
-                ? `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`
-                : null,
+            transform: `rotate(${i * dotRadius}deg)`,
           }}
-        />
+        >
+          {dots}
+        </g>
       );
     }
     return result;
   };
 
   const createAnimations = () => {
-    const Trinitys = document.querySelectorAll('.Trinity');
-    const svg = document.querySelector('.Trinity-svg');
-
+    const svg = document.querySelector('.DotsCircle-svg');
+    const DotsGroups = document.querySelectorAll('.DotsCircle-group');
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
     if (!animationsRotate.current) {
-      animationsRotate.current = animare({ to: 360, duration: 20000, repeat: -1, autoPlay: isRotating.current }, ([r]) => {
-        svg.style.transform = `translate(0%, -10%) rotate(${r}deg)`;
-      });
+      animationsRotate.current = animare(
+        { to: 360, duration: 100000, direction: 'alternate', autoPlay: isRotating.current },
+        ([r]) => {
+          svg.style.transform = `rotate(${r}deg)`;
+        }
+      );
     }
 
-    for (let i = 0; i < Trinitys.length; i++) {
-      const e = Trinitys[i];
+    for (let g = 0; g < DotsGroups.length; g++) {
+      const dots = DotsGroups[g].querySelectorAll('.DotsCircle');
 
-      const length = e.getTotalLength();
-      e.style.strokeDasharray = length / 3 + 'px';
+      for (let i = 0; i < dots.length; i++) {
+        const e = dots[i];
 
-      if (isAnimation.current) {
-        const callback = ([o], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.strokeDashoffset = o + 'px';
-        };
+        if (isAnimation.current) {
+          const callback = ([r], { pause }) => {
+            if (!document.body.contains(e)) pause();
+            e.setAttribute('r', r < 0 ? 0 : r);
+          };
 
-        const a = animare(
-          { to: length, duration: duration.current, delay: i * delay.current, autoPlay: false, ease: getEase },
-          callback
-        ).next({ from: -length, to: 0 });
-        a.setTimelineOptions({ repeat: -1 });
-        animations.current.push(a);
-      }
+          const from = +e.getAttribute('r');
 
-      if (isRgb.current) {
-        const callback_color = ([r, g, b], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.stroke = `rgb(${r},${g},${b})`;
-          isGlowing.current
-            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
-            : e.style.removeProperty('filter');
-        };
-        const a_rgb = animare(
-          {
-            from: [255, 0, 0],
-            to: [0, 0, 255],
-            duration: 4000,
-            delay: i * delay.current,
-            delayOnce: true,
-            autoPlay: false,
-          },
-          callback_color
-        )
-          .next({ to: [0, 255, 0] })
-          .next({ to: [255, 0, 0] });
-        a_rgb.setTimelineOptions({ repeat: -1 });
-        animationsRgb.current.push(a_rgb);
+          const a = animare(
+            {
+              from,
+              to: 0,
+              duration: duration.current,
+              delay: i * delay.current,
+              delayOnce: true,
+              repeat: -1,
+              direction: 'alternate',
+              autoPlay: false,
+              ease: getEase,
+            },
+            callback
+          );
+          animations.current.push(a);
+        }
+
+        if (isRgb.current) {
+          const callback_rgb = ([r, g, b], { pause }) => {
+            if (!document.body.contains(e)) pause();
+            e.style.fill = `rgb(${r},${g},${b})`;
+            isGlowing.current
+              ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
+              : e.style.removeProperty('filter');
+          };
+          const a_rgb = animare(
+            {
+              from: [255, 0, 0],
+              to: [0, 0, 255],
+              duration: 2000,
+              delay: i * delay.current,
+              delayOnce: true,
+              autoPlay: false,
+            },
+            callback_rgb
+          )
+            .next({ to: [0, 255, 0] })
+            .next({ to: [255, 0, 0] });
+          a_rgb.setTimelineOptions({ repeat: -1 });
+          animationsRgb.current.push(a_rgb);
+        }
       }
     }
     play();
@@ -128,14 +165,14 @@ export default function Trinity() {
   };
 
   const disco = async () => {
-    const Trinitys = document.querySelectorAll('.Trinity');
+    const DotsCircles = document.querySelectorAll('.DotsCircle');
     while (isDisco.current) {
       await new Promise(resolve => setTimeout(resolve, 500));
       if (!isDisco.current) return;
-      for (let i = 0; i < Trinitys.length; i++) {
-        const e = Trinitys[i];
+      for (let i = 0; i < DotsCircles.length; i++) {
+        const e = DotsCircles[i];
         const color = generateColor();
-        e.style.stroke = color;
+        e.style.fill = color;
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
       }
     }
@@ -143,8 +180,7 @@ export default function Trinity() {
 
   const play = () => {
     for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.setOptions({ delay: i * delay.current });
-      animations.current[i].play();
+      animations.current[i]?.play();
       animationsRgb.current?.[i]?.play();
     }
   };
@@ -159,11 +195,11 @@ export default function Trinity() {
   useEffect(() => {
     setupAnimation();
     if (isDisco.current) disco();
-  }, [count]);
+  }, [count, dotGap]);
 
   useEffect(() => {
     const params = parseUrl();
-    if (params.strokeColor) document.body.style.setProperty('--stroke-color', '#' + params.strokeColor);
+    if (params.fillColor) document.body.style.setProperty('--fill-color', '#' + params.fillColor);
     if (params.strokeWidth) document.body.style.setProperty('--stroke-width', params.strokeWidth + 'px');
     if (params.glowStrength) document.body.style.setProperty('--glow-trength', params.glowStrength + 'px');
     if (params.backgroundColor) onBgColorChange('#' + params.backgroundColor);
@@ -184,9 +220,9 @@ export default function Trinity() {
     addUrlQuery({ count: value });
   };
 
-  const onStrokeWidthChange = e => {
-    document.body.style.setProperty('--stroke-width', e.target.value);
-    addUrlQuery({ strokeWidth: +e.target.value });
+  const onDotGapChange = e => {
+    setDotGap(+e.target.value);
+    addUrlQuery({ dotGap: +e.target.value });
   };
 
   const onDurationChange = e => {
@@ -210,21 +246,15 @@ export default function Trinity() {
   };
 
   const onZoomChange = e => {
-    document.querySelector('.Trinity-svg').style.height = (e?.target?.value ?? e) + '%';
-    document.querySelector('.Trinity-svg').style.width = (e?.target?.value ?? e) + '%';
+    document.querySelector('.DotsCircle-svg').style.height = (e?.target?.value ?? e) + '%';
+    document.querySelector('.DotsCircle-svg').style.width = (e?.target?.value ?? e) + '%';
     if (e?.target?.value) addUrlQuery({ zoom: +e.target.value });
   };
 
-  const onRotateChange = async e => {
+  const onRotateChange = e => {
     isRotating.current = e.target.checked;
     addUrlQuery({ isRotating: e.target.checked });
-    if (isRotating.current) {
-      animationsRotate.current?.play();
-    } else {
-      animationsRotate.current?.stop(0);
-      await sleep(50);
-      document.querySelector('.Trinity-svg').style.removeProperty('transform');
-    }
+    isRotating.current ? animationsRotate.current.play() : animationsRotate.current.stop();
   };
 
   const onRGBChange = async e => {
@@ -235,24 +265,24 @@ export default function Trinity() {
     document.getElementById('color-input').disabled = isRgb.current;
 
     if (isRgb.current) {
-      document.querySelectorAll('.Trinity').forEach(e => {
-        e.style.stroke = 'red';
+      document.querySelectorAll('.DotsCircle').forEach(e => {
+        e.style.fill = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
       setupAnimation();
     } else {
       animationsRgb.current.forEach(a => a.stop(0));
       animationsRgb.current = [];
-      await new Promise(resolve => setTimeout(resolve, 100));
-      document.querySelectorAll('.Trinity').forEach(e => {
+      await sleep(100);
+      document.querySelectorAll('.DotsCircle').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
-          e.style.stroke = color;
+          e.style.fill = color;
           if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
           return;
         }
-        e.style.removeProperty('stroke');
-        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
+        e.style.removeProperty('fill');
+        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--fill-color))`;
       });
     }
   };
@@ -269,22 +299,22 @@ export default function Trinity() {
       disco();
     } else {
       if (isRgb.current) setupAnimation();
-      document.querySelectorAll('.Trinity').forEach(e => {
+      document.querySelectorAll('.DotsCircle').forEach(e => {
         if (isRandomColor.current) {
           const color = generateColor();
-          e.style.stroke = color;
+          e.style.fill = color;
           if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
           return;
         }
-        e.style.removeProperty('stroke');
+        e.style.removeProperty('fill');
         isGlowing.current
-          ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`)
+          ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--fill-color))`)
           : e.style.removeProperty('filter');
       });
     }
   };
 
-  const onGlowChange = async e => {
+  const onGlowChange = e => {
     isGlowing.current = e.target.checked;
     addUrlQuery({ isGlowing: isGlowing.current });
     document.getElementById('glow-input').disabled = !isGlowing.current;
@@ -292,19 +322,19 @@ export default function Trinity() {
     if (isGlowing.current) {
       if (isRgb.current) return;
       if (isRandomColor.current) {
-        document.querySelectorAll('.Trinity').forEach(e => {
+        document.querySelectorAll('.DotsCircle').forEach(e => {
           const color = generateColor();
-          e.style.stroke = color;
+          e.style.fill = color;
           e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
         });
         return;
       }
 
-      document.querySelectorAll('.Trinity').forEach(e => {
-        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
+      document.querySelectorAll('.DotsCircle').forEach(e => {
+        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--fill-color))`;
       });
     } else {
-      document.querySelectorAll('.Trinity').forEach(e => {
+      document.querySelectorAll('.DotsCircle').forEach(e => {
         e.style.removeProperty('filter');
       });
     }
@@ -324,21 +354,21 @@ export default function Trinity() {
     document.getElementById('rgb-check').disabled = isRandomColor.current;
     document.getElementById('disco-check').disabled = isRandomColor.current;
 
-    document.querySelectorAll('.Trinity').forEach(e => {
+    document.querySelectorAll('.DotsCircle').forEach(e => {
       if (isRandomColor.current) {
         const color = generateColor();
-        e.style.stroke = color;
+        e.style.fill = color;
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
         return;
       }
-      e.style.removeProperty('stroke');
-      if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
+      e.style.removeProperty('fill');
+      if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--fill-color))`;
     });
   };
 
   const onColorChange = e => {
-    document.body.style.setProperty('--stroke-color', e.target.value);
-    addUrlQuery({ strokeColor: e.target.value.replace('#', '') });
+    document.body.style.setProperty('--fill-color', e.target.value);
+    addUrlQuery({ fillColor: e.target.value.replace('#', '') });
   };
 
   const onBgColorChange = e => {
@@ -370,27 +400,28 @@ export default function Trinity() {
       </svg>
 
       <div className='container'>
-        <svg className='Trinity-svg' viewBox='0 0 500 500'>
-          {createTrinitys()}
+        <svg className='DotsCircle-svg' viewBox='0 0 500 500'>
+          {createDotsCircles()}
         </svg>
 
         <div className='controls'>
-          <label className='labels' htmlFor='Trinity-count'>
-            Trinitys Count:
-          </label>
-          <input className='inputs' type='number' min={1} max={100} name='Trinity-count' value={count} onChange={onCountChange} />
-
-          <label className='labels' htmlFor='Trinity-stroke-width'>
-            Stroke width:
+          <label className='labels' htmlFor='DotsCircle-count'>
+            Circles Count:
           </label>
           <input
             className='inputs'
             type='number'
             min={1}
-            name='Trinity-stroke-width'
-            defaultValue={parseUrl().strokeWidth ?? 1}
-            onChange={onStrokeWidthChange}
+            max={100}
+            name='DotsCircle-count'
+            value={count}
+            onChange={onCountChange}
           />
+
+          <label className='labels' htmlFor='DotsCircle-gap'>
+            Gap:
+          </label>
+          <input className='inputs' type='number' min={0} name='DotsCircle-gap' value={dotGap} onChange={onDotGapChange} />
 
           <label className='labels' htmlFor='duration'>
             Duration:
@@ -448,7 +479,7 @@ export default function Trinity() {
             min='5'
             max='150'
             name='zoom'
-            defaultValue={parseUrl().zoom ?? 90}
+            defaultValue={parseUrl().zoom ?? 95}
             onChange={onZoomChange}
           />
 
@@ -544,12 +575,12 @@ export default function Trinity() {
             id='color-input'
             type='color'
             name='color'
-            defaultValue={'#' + (parseUrl()?.strokeColor ?? 'ffffff')}
+            defaultValue={'#' + (parseUrl()?.fillColor ?? 'ffffff')}
             disabled={isRandomColor.current || isDisco.current || isRgb.current}
             onChange={onColorChange}
           />
           <label className='labels' htmlFor='color'>
-            Stroke Color
+            Fill Color
           </label>
 
           <br />
@@ -570,4 +601,3 @@ export default function Trinity() {
     </>
   );
 }
-

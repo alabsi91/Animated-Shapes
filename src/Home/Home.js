@@ -11,6 +11,7 @@ export default function Home() {
 
   return (
     <div className='container'>
+      <Card path='DotsCircle' />
       <Card path='Clock' />
       <Card path='MultiSidedPolygon' />
       <Card path='Trinity' />
@@ -67,7 +68,7 @@ const Card = ({ path }) => {
   return (
     <div className='card-container' onClick={navigate} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <img ref={pngImg} src={pngUrl} alt={path} />
-      <img ref={gifImg} src={gifUrl} alt={path} style={{ display: 'none' }} />
+      <img ref={gifImg} src={gifUrl} alt={path} loading='lazy' style={{ display: 'none' }} />
     </div>
   );
 };

@@ -39,9 +39,9 @@ export default function Tunnel() {
           x={x}
           y={y}
           width={width < 0 ? 0 : width}
-          height={height< 0 ? 0 : height}
+          height={height < 0 ? 0 : height}
           style={{
-            stroke: isRandomColor.current ? color : null,
+            stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
             filter:
               isGlowing.current && isRandomColor.current
                 ? `drop-shadow(0px 0px var(--glow-trength) ${color})`

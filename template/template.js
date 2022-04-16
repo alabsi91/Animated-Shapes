@@ -36,7 +36,7 @@ export default function SSSSS() {
           cy='50%'
           r={0}
           style={{
-            stroke: isRandomColor.current ? color : null,
+            stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
             filter:
               isGlowing.current && isRandomColor.current
                 ? `drop-shadow(0px 0px var(--glow-trength) ${color})`

@@ -43,7 +43,7 @@ export default function MultiSidedPolygon() {
           className='MultiSidedPolygon'
           key={'MultiSidedPolygon' + i}
           style={{
-            stroke: isRandomColor.current ? generateColor() : null,
+            stroke: isRandomColor.current ? generateColor() : isRgb.current ? 'red' : null,
             filter:
               isGlowing.current && isRandomColor.current
                 ? `drop-shadow(0px 0px var(--glow-trength) ${generateColor()})`

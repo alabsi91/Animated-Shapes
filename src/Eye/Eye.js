@@ -40,7 +40,7 @@ export default function Eye() {
           r={r}
           style={{
             strokeDasharray: isDash.current ? circumference / 10 : null,
-            stroke: isRandomColor.current ? color : null,
+            stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
             filter:
               isGlowing.current && isRandomColor.current
                 ? `drop-shadow(0px 0px var(--glow-trength) ${color})`

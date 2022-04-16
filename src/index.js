@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client';
 import { animare, ease } from 'animare';
 
 const lazyComponents = {
+  DotsCircle: lazy(() => import('./DotsCircle/DotsCircle')),
   Clock: lazy(() => import('./Clock/Clock')),
   MultiSidedPolygon: lazy(() => import('./MultiSidedPolygon/MultiSidedPolygon')),
   Trinity: lazy(() => import('./Trinity/Trinity')),
@@ -94,7 +95,7 @@ export const parseUrl = () => {
   match?.forEach(m => {
     const q = m.replace(/[?&]/, '');
     const [key, value] = q.split('=');
-    params[key] = /^[1-9]\d+$|true|false/g.test(value) ? JSON.parse(value) : value;
+    params[key] = /^[1-9]+$|true|false/g.test(value) ? JSON.parse(value) : value;
   });
   return params;
 };

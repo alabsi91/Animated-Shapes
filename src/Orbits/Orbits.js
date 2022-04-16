@@ -42,7 +42,7 @@ export default function Orbits() {
           ry={45 * (orbitWidth.current * 5)}
           transform={`rotate(${i * angle})`}
           style={{
-            stroke: isRandomColor.current ? color : null,
+            stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
             filter:
               isGlowing.current && isRandomColor.current
                 ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
