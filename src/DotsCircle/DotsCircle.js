@@ -22,7 +22,7 @@ export default function DotsCircle() {
   const isRgb = useRef(parseUrl().isRgb ?? false);
   const animationsRgb = useRef([]);
   const isRotating = useRef(parseUrl().isRotating ?? false);
-  const animationsRotate = useRef(null);
+  const animationsRotate = useRef([]);
   const timer = useRef(null);
 
   const getXY = (x, y, angle, length) => [
@@ -66,38 +66,49 @@ export default function DotsCircle() {
         }
       }
 
-      result.push(
-        <g
-          className='DotsCircle-group'
-          key={Math.random() * 100}
-          style={{
-            transform: `rotate(${i * dotRadius}deg)`,
-          }}
-        >
-          {dots}
-        </g>
-      );
+      if (dots.length)
+        result.push(
+          <g
+            className='DotsCircle-group'
+            key={Math.random() * 100}
+            data-angle={i * dotRadius}
+            style={{
+              transform: !isRotating.current ? `rotate(${i * dotRadius}deg)` : null,
+            }}
+          >
+            {dots}
+          </g>
+        );
     }
     return result;
   };
 
   const createAnimations = () => {
-    const svg = document.querySelector('.DotsCircle-svg');
     const DotsGroups = document.querySelectorAll('.DotsCircle-group');
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
-    if (!animationsRotate.current) {
-      animationsRotate.current = animare(
-        { to: 360, duration: 100000, direction: 'alternate', autoPlay: isRotating.current },
-        ([r]) => {
-          svg.style.transform = `rotate(${r}deg)`;
-        }
-      );
-    }
-
     for (let g = 0; g < DotsGroups.length; g++) {
       const dots = DotsGroups[g].querySelectorAll('.DotsCircle');
+
+      if (isRotating.current) {
+        const callback_rotate = ([r]) => {
+          DotsGroups[g].style.transform = `rotate(${r}deg)`;
+        };
+
+        const a_rotate = animare(
+          {
+            from: +DotsGroups[g].dataset.angle,
+            to: g % 2 ? 360 : -360,
+            delayOnce: true,
+            duration: 200000,
+            direction: 'alternate',
+            autoPlay: false,
+          },
+          callback_rotate
+        );
+        animationsRotate.current.push(a_rotate);
+      }
 
       for (let i = 0; i < dots.length; i++) {
         const e = dots[i];
@@ -181,6 +192,7 @@ export default function DotsCircle() {
   const play = () => {
     for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.play();
+      animationsRotate.current[i]?.play();
       animationsRgb.current?.[i]?.play();
     }
   };
@@ -188,6 +200,7 @@ export default function DotsCircle() {
   const stop = () => {
     for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.stop(0);
+      animationsRotate.current[i]?.stop(0);
       animationsRgb.current?.[i]?.stop(0);
     }
   };
@@ -251,10 +264,18 @@ export default function DotsCircle() {
     if (e?.target?.value) addUrlQuery({ zoom: +e.target.value });
   };
 
-  const onRotateChange = e => {
+  const onRotateChange = async e => {
     isRotating.current = e.target.checked;
     addUrlQuery({ isRotating: e.target.checked });
-    isRotating.current ? animationsRotate.current.play() : animationsRotate.current.stop();
+    if (isRotating.current) {
+      setupAnimation();
+    } else {
+      animationsRotate.current.forEach(a => a.stop(0));
+      await sleep(50);
+      animationsRotate.current = [];
+      const groups = document.querySelectorAll('.DotsCircle-group');
+      for (let i = 0; i < groups.length; i++) groups[i].style.transform = `rotate(${+groups[i].dataset.angle}deg)`;
+    }
   };
 
   const onRGBChange = async e => {
