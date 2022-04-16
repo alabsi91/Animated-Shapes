@@ -95,7 +95,8 @@ export const parseUrl = () => {
   match?.forEach(m => {
     const q = m.replace(/[?&]/, '');
     const [key, value] = q.split('=');
-    params[key] = /^[1-9]+$|true|false/g.test(value) ? JSON.parse(value) : value;
+    const reg = /^[1-9]\d+$|^[1-9]$|true$|false$/g; // dosn't start with 0 and doesn't contain a 'non-number' or it's a boolean
+    params[key] = reg.test(value) ? JSON.parse(value) : value;
   });
   return params;
 };

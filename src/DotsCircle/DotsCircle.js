@@ -48,7 +48,7 @@ export default function DotsCircle() {
           dots.push(
             <circle
               className='DotsCircle'
-              key={Math.random() * 100}
+              key={Math.random()}
               cx={xy[0]}
               cy={xy[1]}
               r={dotRadius}
@@ -70,7 +70,7 @@ export default function DotsCircle() {
         result.push(
           <g
             className='DotsCircle-group'
-            key={Math.random() * 100}
+            key={Math.random()}
             data-angle={i * dotRadius}
             style={{
               transform: !isRotating.current ? `rotate(${i * dotRadius}deg)` : null,
