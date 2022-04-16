@@ -13,8 +13,8 @@ const getXY = (x, y, angle, length) => [
 export default function Clock() {
   useLazyCss(styles);
 
-  const [count, setCount] = useState(parseUrl().count ?? 10);
-  const [multiplier, setMultiplier] = useState(parseUrl().multiplier ?? 6);
+  const [count, setCount] = useState(parseUrl().count ?? 8);
+  const [multiplier, setMultiplier] = useState(parseUrl().multiplier ?? 4);
 
   const isRandomColor = useRef(parseUrl().isRandomColor ?? false);
   const isDisco = useRef(parseUrl().isDisco ?? false);
@@ -25,6 +25,8 @@ export default function Clock() {
   const animations = useRef([]);
   const isRgb = useRef(parseUrl().isRgb ?? false);
   const animationsRgb = useRef([]);
+  const isRotating = useRef(parseUrl().isRotating ?? false);
+  const animationsRotate = useRef([]);
   const timer = useRef(null);
 
   const createClocks = () => {
@@ -69,6 +71,7 @@ export default function Clock() {
           <g
             className='Clock-group'
             key={Math.random() * 100}
+            data-angle={i * 45}
             style={{
               transform: `rotate(${i * 45}deg)`,
             }}
@@ -89,6 +92,25 @@ export default function Clock() {
 
     for (let g = 0; g < clockGroups.length; g++) {
       const clocks = clockGroups[g].querySelectorAll('.Clock');
+
+      if (isRotating.current) {
+        const callback_rotate = ([r]) => {
+          clockGroups[g].style.transform = `rotate(${r}deg)`;
+        };
+
+        const a_rotate = animare(
+          {
+            to: g % 2 ? 360 : -360,
+            delayOnce: true,
+            duration: 50000 * (g + 1),
+            direction: 'alternate',
+            autoPlay: false,
+            repeat: -1,
+          },
+          callback_rotate
+        );
+        animationsRotate.current.push(a_rotate);
+      }
 
       for (let i = 0; i < clocks.length; i++) {
         const e = clocks[i];
@@ -111,7 +133,7 @@ export default function Clock() {
             ease: getEase,
           },
           callback
-        ).next({ to: from });
+        ).next({ to: from, delay: delay.current * i + g * delay.current, delayOnce: true });
         a.setTimelineOptions({ repeat: -1 });
         animations.current.push(a);
 
@@ -169,6 +191,7 @@ export default function Clock() {
   const play = () => {
     for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.play();
+      animationsRotate.current[i]?.play();
       animationsRgb.current?.[i]?.play();
     }
   };
@@ -176,6 +199,7 @@ export default function Clock() {
   const stop = () => {
     for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.stop(0);
+      animationsRotate.current[i]?.stop(0);
       animationsRgb.current?.[i]?.stop(0);
     }
   };
@@ -222,12 +246,7 @@ export default function Clock() {
   const onDurationChange = e => {
     duration.current = +e.target.value;
     addUrlQuery({ duration: +e.target.value });
-    for (let g = 0; g < animations.current.length; g++) {
-      const group = animations.current[g];
-      for (let i = 0; i < group.length; i++) {
-        group[i]?.setOptions({ duration: duration.current });
-      }
-    }
+    animations.current.forEach(a => a?.setOptions({ duration: duration.current }));
   };
 
   const onDelayChange = e => {
@@ -246,6 +265,20 @@ export default function Clock() {
     document.querySelector('.Clock-svg').style.height = (e?.target?.value ?? e) + '%';
     document.querySelector('.Clock-svg').style.width = (e?.target?.value ?? e) + '%';
     if (e?.target?.value) addUrlQuery({ zoom: +e.target.value });
+  };
+
+  const onRotateChange = async e => {
+    isRotating.current = e.target.checked;
+    addUrlQuery({ isRotating: e.target.checked });
+    if (isRotating.current) {
+      setupAnimation();
+    } else {
+      animationsRotate.current.forEach(a => a.stop(0));
+      await sleep(50);
+      animationsRotate.current = [];
+      const groups = document.querySelectorAll('.Clock-group');
+      for (let i = 0; i < groups.length; i++) groups[i].style.transform = `rotate(${+groups[i].dataset.angle}deg)`;
+    }
   };
 
   const onRGBChange = async e => {
@@ -481,6 +514,19 @@ export default function Clock() {
             defaultValue={parseUrl().zoom ?? 95}
             onChange={onZoomChange}
           />
+
+          <input
+            className='inputs'
+            type='checkbox'
+            name='rotate-Mode'
+            defaultChecked={isRotating.current}
+            onChange={onRotateChange}
+          />
+          <label className='labels' htmlFor='rotate-Mode'>
+            {' '}
+            Rotate
+          </label>
+          <br />
 
           <input
             className='inputs'

@@ -208,6 +208,7 @@ export default function SSSSS() {
     addUrlQuery({ duration: +e.target.value });
     for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.setOptions({ duration: duration.current });
+      animationsDash.current[i]?.setOptions({ duration: duration.current });
     }
   };
 

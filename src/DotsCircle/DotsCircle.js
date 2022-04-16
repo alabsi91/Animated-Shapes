@@ -105,6 +105,7 @@ export default function DotsCircle() {
             duration: 200000,
             direction: 'alternate',
             autoPlay: false,
+            repeat: -1,
           },
           callback_rotate
         );
