@@ -45,6 +45,7 @@ export default function Trinity() {
           }C${108.46 - x * 2},${222.44 - y * 0.8},${245.37 - x * 0.45},${459.46 + y * 3.1},${422.56 + x},${398.39 + y}z`}
           style={{
             stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+            transition: isDisco.current ? 'stroke 500ms , filter 500ms' : null,
             filter:
               isGlowing.current && isRandomColor.current
                 ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
@@ -228,86 +229,81 @@ export default function Trinity() {
   };
 
   const onRGBChange = async e => {
+    const lines = document.querySelectorAll('.Trinity');
+
     isRgb.current = e.target.checked;
     addUrlQuery({ isRgb: isRgb.current });
+
     document.getElementById('random-check').disabled = isRgb.current;
     document.getElementById('disco-check').disabled = isRgb.current;
     document.getElementById('color-input').disabled = isRgb.current;
 
     if (isRgb.current) {
-      document.querySelectorAll('.Trinity').forEach(e => {
+      lines.forEach(e => {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
       setupAnimation();
-    } else {
-      animationsRgb.current.forEach(a => a.stop(0));
-      animationsRgb.current = [];
-      await new Promise(resolve => setTimeout(resolve, 100));
-      document.querySelectorAll('.Trinity').forEach(e => {
-        if (isRandomColor.current) {
-          const color = generateColor();
-          e.style.stroke = color;
-          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
-          return;
-        }
-        e.style.removeProperty('stroke');
-        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
-      });
+      return;
     }
+
+    animationsRgb.current.forEach(a => a.stop(0));
+    animationsRgb.current = [];
+
+    await sleep(100);
+
+    lines.forEach(e => {
+      e.style.removeProperty('stroke');
+      if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
+    });
   };
 
   const onDiscoChange = e => {
+    const lines = document.querySelectorAll('.Trinity');
+
     isDisco.current = e.target.checked;
     addUrlQuery({ isDisco: isDisco.current });
+
     document.getElementById('random-check').disabled = isDisco.current;
     document.getElementById('rgb-check').disabled = isDisco.current;
     document.getElementById('color-input').disabled = isDisco.current;
 
     if (isDisco.current) {
-      if (isRgb.current) animationsRgb.current.forEach(a => a.pause());
+      lines.forEach(e => (e.style.transition = 'stroke 500ms , filter 500ms'));
       disco();
-    } else {
-      if (isRgb.current) setupAnimation();
-      document.querySelectorAll('.Trinity').forEach(e => {
-        if (isRandomColor.current) {
-          const color = generateColor();
-          e.style.stroke = color;
-          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
-          return;
-        }
-        e.style.removeProperty('stroke');
-        isGlowing.current
-          ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`)
-          : e.style.removeProperty('filter');
-      });
+      return;
     }
+
+    lines.forEach(e => {
+      e.style.removeProperty('stroke');
+      e.style.removeProperty('transition');
+
+      isGlowing.current
+        ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`)
+        : e.style.removeProperty('filter');
+    });
   };
 
   const onGlowChange = async e => {
+    const lines = document.querySelectorAll('.Trinity');
+
     isGlowing.current = e.target.checked;
     addUrlQuery({ isGlowing: isGlowing.current });
+
     document.getElementById('glow-input').disabled = !isGlowing.current;
-
     if (isGlowing.current) {
-      if (isRgb.current) return;
-      if (isRandomColor.current) {
-        document.querySelectorAll('.Trinity').forEach(e => {
-          const color = generateColor();
-          e.style.stroke = color;
-          e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
-        });
-        return;
-      }
+      lines.forEach(e => {
+        const color = generateColor();
+        if (isRandomColor.current) e.style.stroke = color;
+        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${
+          isRandomColor.current ? color : isRgb.current ? 'red' : 'var(--stroke-color)'
+        })`;
+      });
 
-      document.querySelectorAll('.Trinity').forEach(e => {
-        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
-      });
-    } else {
-      document.querySelectorAll('.Trinity').forEach(e => {
-        e.style.removeProperty('filter');
-      });
+      return;
     }
+
+    lines.forEach(e => e.style.removeProperty('filter'));
   };
 
   const onGlowStrengthChange = e => {
@@ -570,4 +566,3 @@ export default function Trinity() {
     </>
   );
 }
-

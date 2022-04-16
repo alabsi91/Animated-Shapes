@@ -43,6 +43,7 @@ export default function Orbits() {
           transform={`rotate(${i * angle})`}
           style={{
             stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+            transition: isDisco.current ? 'stroke 500ms , filter 500ms' : null,
             filter:
               isGlowing.current && isRandomColor.current
                 ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
@@ -65,7 +66,7 @@ export default function Orbits() {
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
     if (!rotateAnimation.current) {
-      animare({ to: 360, repeat: -1, duration: 10000 }, ([r]) => {
+      rotateAnimation.current = animare({ to: 360, repeat: -1, duration: 10000 }, ([r]) => {
         svg.style.transform = `rotate(${r}deg)`;
       });
     }
@@ -275,86 +276,82 @@ export default function Orbits() {
   };
 
   const onRGBChange = async e => {
+    const orbits = document.querySelectorAll('.Orbits');
+
     isRgb.current = e.target.checked;
     addUrlQuery({ isRgb: isRgb.current });
+
     document.getElementById('random-check').disabled = isRgb.current;
     document.getElementById('disco-check').disabled = isRgb.current;
     document.getElementById('color-input').disabled = isRgb.current;
 
     if (isRgb.current) {
-      document.querySelectorAll('.Orbits').forEach(e => {
+      orbits.forEach(e => {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
       setupAnimation();
-    } else {
-      animationsRgb.current.forEach(a => a.stop(0));
-      animationsRgb.current = [];
-      await sleep(100);
-      document.querySelectorAll('.Orbits').forEach(e => {
-        if (isRandomColor.current) {
-          const color = generateColor();
-          e.style.stroke = color;
-          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
-          return;
-        }
-        e.style.removeProperty('stroke');
-        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
-      });
+      return;
     }
+
+    animationsRgb.current.forEach(a => a.stop(0));
+    animationsRgb.current = [];
+
+    await sleep(100);
+
+    orbits.forEach(e => {
+      e.style.removeProperty('stroke');
+      if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
+    });
   };
 
   const onDiscoChange = e => {
+    const orbits = document.querySelectorAll('.Orbits');
+
     isDisco.current = e.target.checked;
     addUrlQuery({ isDisco: isDisco.current });
+
     document.getElementById('random-check').disabled = isDisco.current;
     document.getElementById('rgb-check').disabled = isDisco.current;
     document.getElementById('color-input').disabled = isDisco.current;
 
     if (isDisco.current) {
-      if (isRgb.current) animationsRgb.current.forEach(a => a.pause());
+      orbits.forEach(e => (e.style.transition = 'stroke 500ms , filter 500ms'));
       disco();
-    } else {
-      if (isRgb.current) setupAnimation();
-      document.querySelectorAll('.Orbits').forEach(e => {
-        if (isRandomColor.current) {
-          const color = generateColor();
-          e.style.stroke = color;
-          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
-          return;
-        }
-        e.style.removeProperty('stroke');
-        isGlowing.current
-          ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`)
-          : e.style.removeProperty('filter');
-      });
+      return;
     }
+
+    orbits.forEach(e => {
+      e.style.removeProperty('stroke');
+      e.style.removeProperty('transition');
+
+      isGlowing.current
+        ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`)
+        : e.style.removeProperty('filter');
+    });
   };
 
   const onGlowChange = e => {
+    const orbits = document.querySelectorAll('.Orbits');
+
     isGlowing.current = e.target.checked;
     addUrlQuery({ isGlowing: isGlowing.current });
+
     document.getElementById('glow-input').disabled = !isGlowing.current;
 
     if (isGlowing.current) {
-      if (isRgb.current) return;
-      if (isRandomColor.current) {
-        document.querySelectorAll('.Orbits').forEach(e => {
-          const color = generateColor();
-          e.style.stroke = color;
-          e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
-        });
-        return;
-      }
+      orbits.forEach(e => {
+        const color = generateColor();
+        if (isRandomColor.current) e.style.stroke = color;
+        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${
+          isRandomColor.current ? color : isRgb.current ? 'red' : 'var(--stroke-color)'
+        })`;
+      });
 
-      document.querySelectorAll('.Orbits').forEach(e => {
-        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
-      });
-    } else {
-      document.querySelectorAll('.Orbits').forEach(e => {
-        e.style.removeProperty('filter');
-      });
+      return;
     }
+
+    orbits.forEach(e => e.style.removeProperty('filter'));
   };
 
   const onGlowStrengthChange = e => {

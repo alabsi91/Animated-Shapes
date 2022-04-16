@@ -16,7 +16,7 @@ export default function DotsCircle() {
   const isGlowing = useRef(parseUrl().isGlowing ?? false);
   const easing = useRef(parseUrl().easing ?? 'linear');
   const delay = useRef(parseUrl().delay ?? 50);
-  const duration = useRef(parseUrl().duration ?? 5000);
+  const duration = useRef(parseUrl().duration ?? 2000);
   const isAnimation = useRef(parseUrl().isAnimation ?? true);
   const animations = useRef([]);
   const isRgb = useRef(parseUrl().isRgb ?? false);
@@ -54,6 +54,7 @@ export default function DotsCircle() {
               r={dotRadius}
               style={{
                 fill: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+                transition: isDisco.current ? 'fill 500ms , filter 500ms' : null,
                 filter:
                   isGlowing.current && isRandomColor.current
                     ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
@@ -128,13 +129,12 @@ export default function DotsCircle() {
               duration: duration.current,
               delay: i * delay.current,
               delayOnce: true,
-              repeat: -1,
-              direction: 'alternate',
               autoPlay: false,
               ease: getEase,
             },
             callback
-          );
+          ).next({ to: from });
+          a.setTimelineOptions({ repeat: -1 });
           animations.current.push(a);
         }
 
@@ -279,86 +279,81 @@ export default function DotsCircle() {
   };
 
   const onRGBChange = async e => {
+    const dots = document.querySelectorAll('.DotsCircle');
+
     isRgb.current = e.target.checked;
     addUrlQuery({ isRgb: isRgb.current });
+
     document.getElementById('random-check').disabled = isRgb.current;
     document.getElementById('disco-check').disabled = isRgb.current;
     document.getElementById('color-input').disabled = isRgb.current;
 
     if (isRgb.current) {
-      document.querySelectorAll('.DotsCircle').forEach(e => {
+      dots.forEach(e => {
         e.style.fill = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
       setupAnimation();
-    } else {
-      animationsRgb.current.forEach(a => a.stop(0));
-      animationsRgb.current = [];
-      await sleep(100);
-      document.querySelectorAll('.DotsCircle').forEach(e => {
-        if (isRandomColor.current) {
-          const color = generateColor();
-          e.style.fill = color;
-          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
-          return;
-        }
-        e.style.removeProperty('fill');
-        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--fill-color))`;
-      });
+      return;
     }
+
+    animationsRgb.current.forEach(a => a.stop(0));
+    animationsRgb.current = [];
+
+    await sleep(100);
+
+    dots.forEach(e => {
+      e.style.removeProperty('fill');
+      if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--fill-color))`;
+    });
   };
 
   const onDiscoChange = e => {
+    const dots = document.querySelectorAll('.DotsCircle');
+
     isDisco.current = e.target.checked;
     addUrlQuery({ isDisco: isDisco.current });
+
     document.getElementById('random-check').disabled = isDisco.current;
     document.getElementById('rgb-check').disabled = isDisco.current;
     document.getElementById('color-input').disabled = isDisco.current;
 
     if (isDisco.current) {
-      if (isRgb.current) animationsRgb.current.forEach(a => a.pause());
+      dots.forEach(e => (e.style.transition = 'fill 500ms , filter 500ms'));
       disco();
-    } else {
-      if (isRgb.current) setupAnimation();
-      document.querySelectorAll('.DotsCircle').forEach(e => {
-        if (isRandomColor.current) {
-          const color = generateColor();
-          e.style.fill = color;
-          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
-          return;
-        }
-        e.style.removeProperty('fill');
-        isGlowing.current
-          ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--fill-color))`)
-          : e.style.removeProperty('filter');
-      });
+      return;
     }
+
+    dots.forEach(e => {
+      e.style.removeProperty('fill');
+      e.style.removeProperty('transition');
+
+      isGlowing.current
+        ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--fill-color))`)
+        : e.style.removeProperty('filter');
+    });
   };
 
   const onGlowChange = e => {
+    const dots = document.querySelectorAll('.DotsCircle');
+
     isGlowing.current = e.target.checked;
     addUrlQuery({ isGlowing: isGlowing.current });
     document.getElementById('glow-input').disabled = !isGlowing.current;
 
     if (isGlowing.current) {
-      if (isRgb.current) return;
-      if (isRandomColor.current) {
-        document.querySelectorAll('.DotsCircle').forEach(e => {
-          const color = generateColor();
-          e.style.fill = color;
-          e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
-        });
-        return;
-      }
+      dots.forEach(e => {
+        const color = generateColor();
+        if (isRandomColor.current) e.style.fill = color;
+        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${
+          isRandomColor.current ? color : isRgb.current ? 'red' : 'var(--fill-color)'
+        })`;
+      });
 
-      document.querySelectorAll('.DotsCircle').forEach(e => {
-        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--fill-color))`;
-      });
-    } else {
-      document.querySelectorAll('.DotsCircle').forEach(e => {
-        e.style.removeProperty('filter');
-      });
+      return;
     }
+
+    dots.forEach(e => e.style.removeProperty('filter'));
   };
 
   const onGlowStrengthChange = e => {

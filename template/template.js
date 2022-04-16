@@ -37,6 +37,7 @@ export default function SSSSS() {
           r={0}
           style={{
             stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+            transition: isDisco.current ? 'stroke 500ms , filter 500ms' : null,
             filter:
               isGlowing.current && isRandomColor.current
                 ? `drop-shadow(0px 0px var(--glow-trength) ${color})`
@@ -241,86 +242,82 @@ export default function SSSSS() {
   };
 
   const onRGBChange = async e => {
+    const SSSSSs = document.querySelectorAll('.SSSSS');
+
     isRgb.current = e.target.checked;
     addUrlQuery({ isRgb: isRgb.current });
+
     document.getElementById('random-check').disabled = isRgb.current;
     document.getElementById('disco-check').disabled = isRgb.current;
     document.getElementById('color-input').disabled = isRgb.current;
 
     if (isRgb.current) {
-      document.querySelectorAll('.SSSSS').forEach(e => {
+      SSSSSs.forEach(e => {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
       setupAnimation();
-    } else {
-      animationsRgb.current.forEach(a => a.stop(0));
-      animationsRgb.current = [];
-      await sleep(100);
-      document.querySelectorAll('.SSSSS').forEach(e => {
-        if (isRandomColor.current) {
-          const color = generateColor();
-          e.style.stroke = color;
-          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
-          return;
-        }
-        e.style.removeProperty('stroke');
-        if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
-      });
+      return;
     }
+
+    animationsRgb.current.forEach(a => a.stop(0));
+    animationsRgb.current = [];
+
+    await sleep(100);
+
+    SSSSSs.forEach(e => {
+      e.style.removeProperty('stroke');
+      if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
+    });
   };
 
   const onDiscoChange = e => {
+    const SSSSSs = document.querySelectorAll('.SSSSS');
+
     isDisco.current = e.target.checked;
     addUrlQuery({ isDisco: isDisco.current });
+
     document.getElementById('random-check').disabled = isDisco.current;
     document.getElementById('rgb-check').disabled = isDisco.current;
     document.getElementById('color-input').disabled = isDisco.current;
 
     if (isDisco.current) {
-      if (isRgb.current) animationsRgb.current.forEach(a => a.pause());
+      SSSSSs.forEach(e => (e.style.transition = 'stroke 500ms , filter 500ms'));
       disco();
-    } else {
-      if (isRgb.current) setupAnimation();
-      document.querySelectorAll('.SSSSS').forEach(e => {
-        if (isRandomColor.current) {
-          const color = generateColor();
-          e.style.stroke = color;
-          if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
-          return;
-        }
-        e.style.removeProperty('stroke');
-        isGlowing.current
-          ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`)
-          : e.style.removeProperty('filter');
-      });
+      return;
     }
+
+    SSSSSs.forEach(e => {
+      e.style.removeProperty('stroke');
+      e.style.removeProperty('transition');
+
+      isGlowing.current
+        ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`)
+        : e.style.removeProperty('filter');
+    });
   };
 
   const onGlowChange = e => {
+    const SSSSSs = document.querySelectorAll('.SSSSS');
+
     isGlowing.current = e.target.checked;
     addUrlQuery({ isGlowing: isGlowing.current });
+
     document.getElementById('glow-input').disabled = !isGlowing.current;
 
     if (isGlowing.current) {
-      if (isRgb.current) return;
-      if (isRandomColor.current) {
-        document.querySelectorAll('.SSSSS').forEach(e => {
-          const color = generateColor();
-          e.style.stroke = color;
-          e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${color})`;
-        });
-        return;
-      }
+      SSSSSs.forEach(e => {
+        const color = generateColor();
+        if (isRandomColor.current) e.style.stroke = color;
+        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) ${
+          isRandomColor.current ? color : isRgb.current ? 'red' : 'var(--stroke-color)'
+        })`;
+      });
 
-      document.querySelectorAll('.SSSSS').forEach(e => {
-        e.style.filter = `drop-shadow(0px 0px var(--glow-trength) var(--stroke-color))`;
-      });
-    } else {
-      document.querySelectorAll('.SSSSS').forEach(e => {
-        e.style.removeProperty('filter');
-      });
+      return;
     }
+
+    SSSSSs.forEach(e => e.style.removeProperty('filter'));
   };
 
   const onGlowStrengthChange = e => {
