@@ -41,9 +41,9 @@ export default function MultiSidedPolygon() {
       result.push(
         <path
           className='MultiSidedPolygon'
-          key={'MultiSidedPolygon' + i}
+          key={Math.random()}
           style={{
-            stroke: isRandomColor.current ? generateColor() : isRgb.current ? 'red' : null,
+            stroke: isRandomColor.current || isDisco.current ? generateColor() : isRgb.current ? 'red' : null,
             transition: isDisco.current ? 'stroke 500ms , filter 500ms' : null,
             filter:
               isGlowing.current && isRandomColor.current

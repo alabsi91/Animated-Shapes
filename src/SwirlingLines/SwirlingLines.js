@@ -46,10 +46,10 @@ export default function SwirlingLines() {
       result.push(
         <path
           className='SwirlingLines'
-          key={Math.random() * 100}
+          key={Math.random()}
           d={xy.join(' ')}
           style={{
-            stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+            stroke: isRandomColor.current || isDisco.current ? color : isRgb.current ? 'red' : null,
             transition: isDisco.current ? 'stroke 500ms , filter 500ms' : null,
             filter:
               isGlowing.current && isRandomColor.current

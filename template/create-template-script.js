@@ -37,7 +37,7 @@ rl.on('close', async function () {
 
   await mkdir(`./src/${name}`);
 
-  console.log(('\nCreating ' + name + ' ...').yellow);
+  console.log((`\nCreating ${name} ...`).yellow);
 
   const js_template = await readFile('./template/template.js', 'utf8');
   await writeFile(`./src/${name}/${name}.js`, js_template.replaceAll('SSSSS', name));

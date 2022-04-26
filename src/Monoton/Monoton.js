@@ -33,15 +33,15 @@ export default function Monoton() {
           cloneElement(
             L,
             {
-              key: Math.random() * 100,
+              key: Math.random(),
               className: 'Monoton-svg',
             },
             L?.props?.children?.map(c =>
               cloneElement(c, {
-                key: Math.random() * 100,
+                key: Math.random(),
                 className: 'Monoton',
                 style: {
-                  stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+                  stroke: isRandomColor.current || isDisco.current ? color : isRgb.current ? 'red' : null,
                   transition: isDisco.current ? 'stroke 500ms , filter 500ms' : null,
                   filter:
                     isGlowing.current && isRandomColor.current

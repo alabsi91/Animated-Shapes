@@ -49,12 +49,12 @@ export default function Clock() {
           pathes.push(
             <path
               className='Clock'
-              key={Math.random() * 100}
+              key={Math.random()}
               data-from={[x1, y1, x2, y2]}
               data-to={[xTo, yTo, x1, y1]}
               d={`M ${x1} ${y1} L ${x2} ${y2}`}
               style={{
-                stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+                stroke: isRandomColor.current || isDisco.current ? color : isRgb.current ? 'red' : null,
                 transition: isDisco.current ? 'stroke 500ms , filter 500ms' : null,
                 filter:
                   isGlowing.current && isRandomColor.current
@@ -70,7 +70,7 @@ export default function Clock() {
         result.push(
           <g
             className='Clock-group'
-            key={Math.random() * 100}
+            key={Math.random()}
             data-angle={i * 45}
             style={{
               transform: `rotate(${i * 45}deg)`,

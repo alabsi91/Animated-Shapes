@@ -53,7 +53,7 @@ export default function DotsCircle() {
               cy={xy[1]}
               r={dotRadius}
               style={{
-                fill: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+                fill: isRandomColor.current || isDisco.current ? color : isRgb.current ? 'red' : null,
                 transition: isDisco.current ? 'fill 500ms , filter 500ms' : null,
                 filter:
                   isGlowing.current && isRandomColor.current

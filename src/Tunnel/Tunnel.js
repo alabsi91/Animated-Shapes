@@ -35,13 +35,13 @@ export default function Tunnel() {
       result.push(
         <rect
           className='Tunnel'
-          key={Math.random() * 100}
+          key={Math.random()}
           x={x}
           y={y}
           width={width < 0 ? 0 : width}
           height={height < 0 ? 0 : height}
           style={{
-            stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+            stroke: isRandomColor.current || isDisco.current ? color : isRgb.current ? 'red' : null,
             transition: isDisco.current ? 'stroke 500ms , filter 500ms' : null,
             filter:
               isGlowing.current && isRandomColor.current

@@ -35,14 +35,14 @@ export default function Orbits() {
       result.push(
         <ellipse
           className='Orbits'
-          key={Math.random() * 100}
+          key={Math.random()}
           cx='50%'
           cy='50%'
           rx={45 * (orbitHeight.current * 5)}
           ry={45 * (orbitWidth.current * 5)}
           transform={`rotate(${i * angle})`}
           style={{
-            stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+            stroke: isRandomColor.current || isDisco.current ? color : isRgb.current ? 'red' : null,
             transition: isDisco.current ? 'stroke 500ms , filter 500ms' : null,
             filter:
               isGlowing.current && isRandomColor.current

@@ -28,7 +28,7 @@ export default function Cuboid() {
 
       result[i > 0 ? 'unshift' : 'push'](
         <div
-          key={Math.random() * 100}
+          key={Math.random()}
           className='scene'
           data-order={order}
           style={{ transform: 'rotateX(180deg) rotateY(0deg)' }}

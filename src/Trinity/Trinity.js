@@ -37,14 +37,14 @@ export default function Trinity() {
       result.push(
         <path
           className='Trinity'
-          key={'Trinity' + i}
+          key={Math.random()}
           d={`M${422.56 + x},${398.39 + y}c${-35.72 + x / 2},${-184.08 - y * 2.9},${-309.44 - x * 2.5},${-183.99 - y * 2.9},${
             -345.12 - x * 2
           },${0}c${177.29 + x * 1.6},${61.08 + y * 2.15},${314.04 + x * 2.9},${-176 - y * 2},${172.57 + x},${
             -298.92 - y * 2.53
           }C${108.46 - x * 2},${222.44 - y * 0.8},${245.37 - x * 0.45},${459.46 + y * 3.1},${422.56 + x},${398.39 + y}z`}
           style={{
-            stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+            stroke: isRandomColor.current || isDisco.current ? color : isRgb.current ? 'red' : null,
             transition: isDisco.current ? 'stroke 500ms , filter 500ms' : null,
             filter:
               isGlowing.current && isRandomColor.current

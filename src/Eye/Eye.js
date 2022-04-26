@@ -34,13 +34,13 @@ export default function Eye() {
       result.push(
         <circle
           className='Eye'
-          key={Math.random() * 100}
+          key={Math.random()}
           cx='50%'
           cy='50%'
           r={r}
           style={{
             strokeDasharray: isDash.current ? circumference / 10 : null,
-            stroke: isRandomColor.current ? color : isRgb.current ? 'red' : null,
+            stroke: isRandomColor.current || isDisco.current ? color : isRgb.current ? 'red' : null,
             transition: isDisco.current ? 'stroke 500ms , filter 500ms' : null,
             filter:
               isGlowing.current && isRandomColor.current
@@ -218,6 +218,7 @@ export default function Eye() {
     addUrlQuery({ duration: +e.target.value });
     for (let i = 0; i < animations.current.length; i++) {
       animations.current[i]?.setOptions({ duration: duration.current });
+      animationsDash.current[i]?.setOptions({ duration: duration.current });
     }
   };
 
