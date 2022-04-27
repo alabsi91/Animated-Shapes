@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { addUrlQuery, parseUrl, useLazyCss, sleep, invertColor, generateColor } from '..';
+import { addUrlQuery, parseUrl, useLazyCss, invertColor, generateColor } from '..';
 import styles from './Orbits.lazy.css';
 
 export default function Orbits() {
@@ -59,7 +59,7 @@ export default function Orbits() {
 
   const createAnimations = () => {
     const svg = document.querySelector('.Orbits-svg');
-    const Orbitss = document.querySelectorAll('.Orbits');
+    const Orbits = document.querySelectorAll('.Orbits');
     const angle = 180 / count;
 
     let getEase = easing.current.split('.');
@@ -71,87 +71,142 @@ export default function Orbits() {
       });
     }
 
-    for (let i = 0; i < Orbitss.length; i++) {
-      const e = Orbitss[i];
+    const op = {};
+
+    for (let i = 0; i < Orbits.length; i++) {
+      const e = Orbits[i];
 
       if (isAnimation.current) {
-        const callback = ([r], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.transform = `rotate(${i * angle}deg) rotateX(${r}deg)`;
-        };
+        op.animation ??= {};
+        op.animation.to ??= [];
+        op.animation.delay ??= [];
 
-        const a = animare(
-          {
-            to: 360,
-            duration: duration.current,
-            delay: i * delay.current,
-            delayOnce: true,
-            repeat: -1,
-            autoPlay: false,
-            ease: getEase,
-          },
-          callback
-        );
-        animations.current.push(a);
+        op.animation.to.push(350);
+        op.animation.delay.push(i * delay.current);
       }
 
-      if (isDash.current) {
-        const length = e.getTotalLength();
-        e.style.strokeDasharray = length + 'px';
+      const length = e.getTotalLength();
+      if (isDash.current) e.style.strokeDasharray = length + 'px';
 
-        const callback = ([o], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.strokeDashoffset = o + 'px';
-        };
+      op.dash ??= {};
+      op.dash.to ??= [];
+      op.dash.to[0] ??= [];
+      op.dash.to[1] ??= [];
+      op.dash.delay ??= [];
+      op.dash.from ??= [];
 
-        const a_dash = animare(
-          {
-            to: length,
-            duration: duration.current / 2,
-            delay: i * delay.current,
-            delayOnce: true,
-            autoPlay: false,
-            ease: getEase,
-          },
-          callback
-        ).next({ from: -length, to: 0 });
-        a_dash.setTimelineOptions({ repeat: -1 });
-        animationsDash.current.push(a_dash);
-      }
+      op.dash.to[0].push(length);
+      op.dash.delay.push(i * delay.current);
+      op.dash.from.push(-length); // next
+      op.dash.to[1].push(0); // next
 
-      if (isRgb.current) {
-        const callback_color = ([r, g, b], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.stroke = `rgb(${r},${g},${b})`;
-          isGlowing.current
-            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
-            : e.style.removeProperty('filter');
-        };
-        const a_rgb = animare(
-          {
-            from: [255, 0, 0],
-            to: [0, 0, 255],
-            duration: 2000,
-            delay: i * delay.current,
-            delayOnce: true,
-            autoPlay: false,
-          },
-          callback_color
-        )
-          .next({ to: [0, 255, 0] })
-          .next({ to: [255, 0, 0] });
-        a_rgb.setTimelineOptions({ repeat: -1 });
-        animationsRgb.current.push(a_rgb);
-      }
+      // rgb
+      op.rgb ??= {};
+      op.rgb.delay ??= [];
+      op.rgb.to ??= [];
+      op.rgb.to[0] ??= [];
+      op.rgb.to[1] ??= [];
+      op.rgb.to[2] ??= [];
+      op.rgb.from ??= [];
+
+      op.rgb.delay.push(...new Array(3).fill(i * delay.current));
+      op.rgb.from.push(...[255, 0, 0]);
+      op.rgb.to[0].push(...[0, 0, 255]);
+      op.rgb.to[1].push(...[0, 255, 0]);
     }
+
+    if (isAnimation.current) {
+      const callback = (v, { pause }) => {
+        for (let i = 0; i < v.length; i++) {
+          const e = Orbits[i];
+          if (!document.body.contains(e)) pause();
+          e.style.transform = `rotate(${i * angle}deg) rotateX(${v[i]}deg)`;
+        }
+      };
+
+      const a = animare(
+        {
+          to: op.animation.to,
+          duration: duration.current,
+          delay: op.animation.delay,
+          delayOnce: true,
+          repeat: -1,
+          autoPlay: false,
+          ease: getEase,
+        },
+        callback
+      );
+      animations.current = a;
+    }
+
+    // dash
+    {
+      const callback = (v, { pause }) => {
+        for (let i = 0; i < v.length; i++) {
+          const e = Orbits[i];
+          if (!document.body.contains(e)) pause();
+          e.style.strokeDashoffset = v[i] + 'px';
+        }
+      };
+
+      const a_dash = animare(
+        {
+          to: op.dash.to[0],
+          duration: duration.current / 2,
+          delay: op.dash.delay,
+          delayOnce: true,
+          autoPlay: false,
+          ease: getEase,
+        },
+        callback
+      ).next({ from: op.dash.from, to: op.dash.to[1] });
+
+      a_dash.setTimelineOptions({ repeat: -1 });
+
+      animationsDash.current = a_dash;
+    }
+
+    // rgb
+    {
+      const callback_color = (v, { pause }) => {
+        for (let i = 0; i < v.length; i = i + 3) {
+          const index = i / 3;
+          const e = Orbits[index];
+          if (!document.body.contains(e)) pause();
+          e.style.stroke = `rgb(${v[i]},${v[i + 1]},${v[i + 2]})`;
+          isGlowing.current
+            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${v[i]},${v[i + 1]},${v[i + 2]}))`)
+            : e.style.removeProperty('filter');
+        }
+      };
+
+      const a_rgb = animare(
+        {
+          from: op.rgb.from,
+          to: op.rgb.to[0],
+          duration: 2000,
+          delay: op.rgb.delay,
+          delayOnce: true,
+          autoPlay: false,
+        },
+        callback_color
+      )
+        .next({ to: op.rgb.to[1] })
+        .next({ to: op.rgb.from });
+
+      a_rgb.setTimelineOptions({ repeat: -1 });
+
+      animationsRgb.current = a_rgb;
+    }
+
     play();
   };
 
   const setupAnimation = () => {
     stop();
-    animations.current = [];
-    animationsRgb.current = [];
-    animationsDash.current = [];
+    animations.current = null;
+    animationsRgb.current = null;
+    animationsDash.current = null;
     clearTimeout(timer.current);
     timer.current = setTimeout(createAnimations, 300);
   };
@@ -171,19 +226,27 @@ export default function Orbits() {
   };
 
   const play = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.play();
-      animationsDash.current[i]?.play();
-      animationsRgb.current?.[i]?.play();
-    }
+    animations.current?.play?.();
+    if (isDash.current) animationsDash.current?.play?.();
+    if (isRgb.current) animationsRgb.current?.play?.();
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.stop(0);
-      animationsDash.current?.[i]?.stop(0);
-      animationsRgb.current?.[i]?.stop(0);
-    }
+    animations.current?.stop?.();
+    if (isDash.current) animationsDash.current?.stop?.();
+    if (isRgb.current) animationsRgb.current?.stop?.();
+  };
+
+  const pause = () => {
+    animations.current?.pause?.();
+    if (isDash.current) animationsDash.current?.pause?.();
+    if (isRgb.current) animationsRgb.current?.pause?.();
+  };
+
+  const resume = () => {
+    animations.current?.resume?.();
+    if (isDash.current) animationsDash.current?.resume?.();
+    if (isRgb.current) animationsRgb.current?.resume?.();
   };
 
   useEffect(() => {
@@ -199,12 +262,12 @@ export default function Orbits() {
     if (params.backgroundColor) onBgColorChange('#' + params.backgroundColor);
     if (params.zoom) onZoomChange(params.zoom);
 
-    window.addEventListener('focus', play);
-    window.addEventListener('blur', stop);
+    window.addEventListener('focus', resume);
+    window.addEventListener('blur', pause);
 
     return () => {
-      window.removeEventListener('focus', play);
-      window.removeEventListener('blur', stop);
+      window.removeEventListener('focus', resume);
+      window.removeEventListener('blur', pause);
     };
   }, []);
 
@@ -240,9 +303,7 @@ export default function Orbits() {
   const onDurationChange = e => {
     duration.current = +e.target.value;
     addUrlQuery({ duration: +e.target.value });
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.setOptions({ duration: duration.current });
-    }
+    setupAnimation();
   };
 
   const onDelayChange = e => {
@@ -266,16 +327,21 @@ export default function Orbits() {
   const onDashChange = e => {
     isDash.current = e.target.checked;
     addUrlQuery({ isDash: e.target.checked });
-    if (!isDash.current) {
-      animationsDash.current.forEach(a => a.stop(0));
-      animationsDash.current = [];
+    if (isDash.current) {
+      animationsDash.current?.resume?.();
+      document.querySelectorAll('.Orbits').forEach(e => {
+        const length = e.getTotalLength();
+        e.style.strokeDasharray = length + 'px';
+      });
+    } else {
+      animationsDash.current?.pause?.();
       document.querySelectorAll('.Orbits').forEach(e => {
         e.style.removeProperty('stroke-dasharray');
       });
-    } else setupAnimation();
+    }
   };
 
-  const onRGBChange = async e => {
+  const onRGBChange = e => {
     const orbits = document.querySelectorAll('.Orbits');
 
     isRgb.current = e.target.checked;
@@ -290,14 +356,11 @@ export default function Orbits() {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
-      setupAnimation();
+      animationsRgb.current?.resume?.();
       return;
     }
 
-    animationsRgb.current.forEach(a => a.stop(0));
-    animationsRgb.current = [];
-
-    await sleep(100);
+    animationsRgb.current?.pause?.();
 
     orbits.forEach(e => {
       e.style.removeProperty('stroke');

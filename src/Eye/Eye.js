@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { addUrlQuery, parseUrl, useLazyCss, sleep, invertColor, generateColor } from '..';
+import { addUrlQuery, parseUrl, useLazyCss, invertColor, generateColor } from '..';
 import styles from './Eye.lazy.css';
 
 export default function Eye() {
@@ -60,92 +60,144 @@ export default function Eye() {
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
+    const op = {};
+
     for (let i = 0; i < Eyes.length; i++) {
       const e = Eyes[i];
 
       if (isAnimation.current) {
-        const callback = ([r, rotate], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.setAttribute('r', r);
-          e.style.transform = `rotateY(${rotateY.current ? rotate : 0}deg) rotateX(${rotateY.current ? 0 : rotate}deg)`;
-        };
+        op.animation ??= {};
+        op.animation.from ??= [];
+        op.animation.to ??= [];
+        op.animation.delay ??= [];
 
-        const a = animare(
-          {
-            from: [(i + 1) * (235 / count), 0],
-            to: [(i + 1) * (235 / count) * 0.7, 180],
-            duration: duration.current,
-            delay: i * delay.current,
-            delayOnce: true,
-            repeat: -1,
-            autoPlay: false,
-            direction: 'alternate',
-            ease: getEase,
-          },
-          callback
-        );
-        animations.current.push(a);
+        op.animation.from.push(...[(i + 1) * (235 / count), 0]);
+        op.animation.to.push(...[(i + 1) * (235 / count) * 0.7, 180]);
+        op.animation.delay.push(...new Array(2).fill(delay.current * i));
       }
 
-      if (isDash.current) {
-        const r = (i + 1) * (235 / count);
-        const circumference = Math.PI * 2 * r;
-        e.style.strokeDasharray = circumference / 10 + 'px';
+      // dash
+      const r = (i + 1) * (235 / count);
+      const circumference = Math.PI * 2 * r;
+      if (isDash.current) e.style.strokeDasharray = circumference / 10 + 'px';
 
-        const callback = ([o], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.strokeDashoffset = o + 'px';
-        };
+      op.dash ??= {};
+      op.dash.to ??= [];
+      op.dash.to[0] ??= [];
+      op.dash.from ??= []; // next
+      op.dash.to[1] ??= []; // next
+      op.dash.delay ??= [];
 
-        const a_dash = animare(
-          {
-            to: circumference,
-            duration: duration.current,
-            delay: i * delay.current * 2,
-            delayOnce: true,
-            autoPlay: false,
-            ease: getEase,
-          },
-          callback
-        ).next({ from: -circumference, to: 0 });
-        a_dash.setTimelineOptions({ repeat: -1 });
-        animationsDash.current.push(a_dash);
-      }
+      op.dash.to[0].push(circumference);
+      op.dash.delay.push(i * delay.current * 2);
+      op.dash.from.push(-circumference); // next
+      op.dash.to[1].push(0); // next
 
-      if (isRgb.current) {
-        const callback_color = ([r, g, b], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.stroke = `rgb(${r},${g},${b})`;
-          isGlowing.current
-            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
-            : e.style.removeProperty('filter');
-        };
+      // rgb
+      op.rgb ??= {};
+      op.rgb.delay ??= [];
+      op.rgb.to ??= [];
+      op.rgb.to[0] ??= [];
+      op.rgb.to[1] ??= [];
+      op.rgb.to[2] ??= [];
+      op.rgb.from ??= [];
 
-        const a_rgb = animare(
-          {
-            from: [255, 0, 0],
-            to: [0, 0, 255],
-            duration: 2000,
-            delay: i * delay.current,
-            delayOnce: true,
-            autoPlay: false,
-          },
-          callback_color
-        )
-          .next({ to: [0, 255, 0] })
-          .next({ to: [255, 0, 0] });
-        a_rgb.setTimelineOptions({ repeat: -1 });
-        animationsRgb.current.push(a_rgb);
-      }
+      op.rgb.delay.push(...new Array(3).fill(i * delay.current));
+      op.rgb.from.push(...[255, 0, 0]);
+      op.rgb.to[0].push(...[0, 0, 255]);
+      op.rgb.to[1].push(...[0, 255, 0]);
     }
+
+    if (isAnimation.current) {
+      const callback = (v, { pause }) => {
+        for (let i = 0; i < v.length; i = i + 2) {
+          const e = Eyes[i / 2];
+          if (!document.body.contains(e)) pause();
+          e.setAttribute('r', v[i]);
+          e.style.transform = `rotateY(${rotateY.current ? v[i + 1] : 0}deg) rotateX(${rotateY.current ? 0 : v[i + 1]}deg)`;
+        }
+      };
+
+      const a = animare(
+        {
+          from: op.animation.from,
+          to: op.animation.to,
+          duration: duration.current,
+          delay: op.animation.delay,
+          delayOnce: true,
+          repeat: -1,
+          autoPlay: false,
+          direction: 'alternate',
+          ease: getEase,
+        },
+        callback
+      );
+      animations.current = a;
+    }
+
+    // dash
+    {
+      const callback = (v, { pause }) => {
+        for (let i = 0; i < v.length; i++) {
+          const e = Eyes[i];
+          if (!document.body.contains(e)) pause();
+          e.style.strokeDashoffset = v[i] + 'px';
+        }
+      };
+
+      const a_dash = animare(
+        {
+          to: op.dash.to[0],
+          duration: duration.current,
+          delay: op.dash.delay,
+          delayOnce: true,
+          autoPlay: false,
+          ease: getEase,
+        },
+        callback
+      ).next({ from: op.dash.from, to: op.dash.to[1] });
+      a_dash.setTimelineOptions({ repeat: -1 });
+      animationsDash.current = a_dash;
+    }
+
+    // rgb
+    {
+      const callback_color = (v, { pause }) => {
+        for (let i = 0; i < v.length; i = i + 3) {
+          const e = Eyes[i / 3];
+          if (!document.body.contains(e)) pause();
+          e.style.stroke = `rgb(${v[i]},${v[i + 1]},${v[i + 2]})`;
+          isGlowing.current
+            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${v[i]},${v[i + 1]},${v[i + 2]}))`)
+            : e.style.removeProperty('filter');
+        }
+      };
+
+      const a_rgb = animare(
+        {
+          from: op.rgb.from,
+          to: op.rgb.to[0],
+          duration: 2000,
+          delay: op.rgb.delay,
+          delayOnce: true,
+          autoPlay: false,
+        },
+        callback_color
+      )
+        .next({ to: op.rgb.to[1] })
+        .next({ to: op.rgb.from });
+      a_rgb.setTimelineOptions({ repeat: -1 });
+      animationsRgb.current = a_rgb;
+    }
+
     play();
   };
 
   const setupAnimation = () => {
     stop();
-    animations.current = [];
-    animationsRgb.current = [];
-    animationsDash.current = [];
+    animations.current = null;
+    animationsRgb.current = null;
+    animationsDash.current = null;
     clearTimeout(timer.current);
     timer.current = setTimeout(createAnimations, 300);
   };
@@ -165,19 +217,27 @@ export default function Eye() {
   };
 
   const play = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.play();
-      animationsRgb.current?.[i]?.play();
-      animationsDash.current?.[i]?.play();
-    }
+    animations.current?.play?.();
+    if (isRgb.current) animationsRgb.current?.play?.();
+    if (isDash.current) animationsDash.current?.play?.();
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.stop(0);
-      animationsRgb.current?.[i]?.stop(0);
-      animationsDash.current?.[i]?.stop(0);
-    }
+    animations.current?.stop?.();
+    if (isRgb.current) animationsRgb.current?.stop?.();
+    if (isDash.current) animationsDash.current?.stop?.();
+  };
+
+  const pause = () => {
+    animations.current?.pause?.();
+    if (isRgb.current) animationsRgb.current?.pause?.();
+    if (isDash.current) animationsDash.current?.pause?.();
+  };
+
+  const resume = () => {
+    animations.current?.resume?.();
+    if (isRgb.current) animationsRgb.current?.resume?.();
+    if (isDash.current) animationsDash.current?.resume?.();
   };
 
   useEffect(() => {
@@ -193,12 +253,12 @@ export default function Eye() {
     if (params.backgroundColor) onBgColorChange('#' + params.backgroundColor);
     if (params.zoom) onZoomChange(params.zoom);
 
-    window.addEventListener('focus', play);
-    window.addEventListener('blur', stop);
+    window.addEventListener('focus', resume);
+    window.addEventListener('blur', pause);
 
     return () => {
-      window.removeEventListener('focus', play);
-      window.removeEventListener('blur', stop);
+      window.removeEventListener('focus', resume);
+      window.removeEventListener('blur', pause);
     };
   }, []);
 
@@ -216,10 +276,7 @@ export default function Eye() {
   const onDurationChange = e => {
     duration.current = +e.target.value;
     addUrlQuery({ duration: +e.target.value });
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.setOptions({ duration: duration.current });
-      animationsDash.current[i]?.setOptions({ duration: duration.current });
-    }
+    setupAnimation();
   };
 
   const onDelayChange = e => {
@@ -243,13 +300,19 @@ export default function Eye() {
   const onDashChange = e => {
     isDash.current = e.target.checked;
     addUrlQuery({ isDash: e.target.checked });
-    if (!isDash.current) {
-      animationsDash.current.forEach(a => a.stop(0));
-      animationsDash.current = [];
+    if (isDash.current) {
+      animationsDash.current?.resume?.();
+      document.querySelectorAll('.Eye').forEach((e, i) => {
+        const r = (i + 1) * (235 / count);
+        const circumference = Math.PI * 2 * r;
+        if (isDash.current) e.style.strokeDasharray = circumference / 10 + 'px';
+      });
+    } else {
+      animationsDash.current?.pause?.();
       document.querySelectorAll('.Eye').forEach(e => {
         e.style.removeProperty('stroke-dasharray');
       });
-    } else setupAnimation();
+    }
   };
 
   const onRotateChange = e => {
@@ -257,7 +320,7 @@ export default function Eye() {
     addUrlQuery({ rotateY: e.target.checked });
   };
 
-  const onRGBChange = async e => {
+  const onRGBChange = e => {
     const eyes = document.querySelectorAll('.Eye');
 
     isRgb.current = e.target.checked;
@@ -272,14 +335,13 @@ export default function Eye() {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
-      setupAnimation();
+
+      animationsRgb.current?.resume?.();
+
       return;
     }
 
-    animationsRgb.current.forEach(a => a.stop(0));
-    animationsRgb.current = [];
-
-    await sleep(100);
+    animationsRgb.current?.pause?.();
 
     eyes.forEach(e => {
       e.style.removeProperty('stroke');

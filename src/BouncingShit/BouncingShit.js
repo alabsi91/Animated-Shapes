@@ -38,29 +38,29 @@ export default function BouncingShit() {
 
     let prevX = xFrom;
     let prevY = yFrom;
-    let shareY = yFrom;
 
-    animare({ from: yFrom, to: yTo, duration, ease: ease.out.bounce }, ([y]) => {
-      shareY = y;
-    });
-
-    await animare({ from: xFrom, to: xTo, duration: duration + 300, ease: ease.out.sine }, ([x], { isLastFrame }) => {
-      // clear ball from previus frame
-      ctx.globalCompositeOperation = 'destination-out';
-      drawShit(prevX, prevY, radius);
-      // draw new ball to current frame
-      ctx.globalCompositeOperation = 'source-over';
-      drawShit(x, shareY, radius);
-      // save current ball position to previus frame
-      prevX = x;
-      prevY = shareY;
-
-      if (isLastFrame) {
-        // clear last ball on the floor
+    const a = animare(
+      { from: [xFrom, yFrom], to: [xTo, yTo], duration: [duration + 300, duration], ease: [ease.out.sine, ease.out.bounce] },
+      ([x, y], { isFinished }) => {
+        // clear ball from previus frame
         ctx.globalCompositeOperation = 'destination-out';
-        drawShit(xTo, shareY, radius);
+        drawShit(prevX, prevY, radius);
+        // draw new ball to current frame
+        ctx.globalCompositeOperation = 'source-over';
+        drawShit(x, y, radius);
+        // save current ball position to previus frame
+        prevX = x;
+        prevY = y;
+
+        if (isFinished) {
+          // clear last ball on the floor
+          ctx.globalCompositeOperation = 'destination-out';
+          drawShit(xTo, y, radius);
+        }
       }
-    }).asyncOnFinish();
+    );
+
+    await a.onFinishAsync();
 
     // draw the last ball to new canvas
     ctx1.globalCompositeOperation = 'source-over';

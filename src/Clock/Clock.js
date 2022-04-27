@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { addUrlQuery, parseUrl, useLazyCss, sleep, invertColor, generateColor } from '..';
+import { addUrlQuery, parseUrl, useLazyCss, invertColor, generateColor } from '..';
 import styles from './Clock.lazy.css';
 
 const getXY = (x, y, angle, length) => [
@@ -22,6 +22,7 @@ export default function Clock() {
   const easing = useRef(parseUrl().easing ?? 'ease.in.quad');
   const delay = useRef(parseUrl().delay ?? 50);
   const duration = useRef(parseUrl().duration ?? 800);
+  const isAnimation = useRef(parseUrl().isAnimation ?? true);
   const animations = useRef([]);
   const isRgb = useRef(parseUrl().isRgb ?? false);
   const animationsRgb = useRef([]);
@@ -86,90 +87,138 @@ export default function Clock() {
 
   const createAnimations = () => {
     const clockGroups = document.querySelectorAll('.Clock-group');
+    const clocks = document.querySelectorAll('.Clock');
 
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
+    const op = {};
+
     for (let g = 0; g < clockGroups.length; g++) {
       const clocks = clockGroups[g].querySelectorAll('.Clock');
 
-      if (isRotating.current) {
-        const callback_rotate = ([r]) => {
-          clockGroups[g].style.transform = `rotate(${r}deg)`;
-        };
+      // rotate
+      op.rotate ??= {};
+      op.rotate.to ??= [];
+      op.rotate.duration ??= [];
 
-        const a_rotate = animare(
-          {
-            to: g % 2 ? 360 : -360,
-            delayOnce: true,
-            duration: 50000 * (g + 1),
-            direction: 'alternate',
-            autoPlay: false,
-            repeat: -1,
-          },
-          callback_rotate
-        );
-        animationsRotate.current.push(a_rotate);
-      }
+      op.rotate.to.push(g % 2 ? 360 : -360);
+      op.rotate.duration.push(50000 * (g + 1));
 
       for (let i = 0; i < clocks.length; i++) {
         const e = clocks[i];
 
-        const callback = ([x1, y1, x2, y2], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
-        };
+        // animation
         const from = e.dataset.from.split(',').map(n => +n);
         const to = e.dataset.to.split(',').map(n => +n);
 
-        const a = animare(
-          {
-            from,
-            to,
-            duration: duration.current,
-            delay: delay.current * i + g * delay.current,
-            delayOnce: true,
-            autoPlay: false,
-            ease: getEase,
-          },
-          callback
-        ).next({ to: from, delay: delay.current * i + g * delay.current, delayOnce: true });
-        a.setTimelineOptions({ repeat: -1 });
-        animations.current.push(a);
+        op.animation ??= {};
+        op.animation.from ??= [];
+        op.animation.to ??= [];
+        op.animation.delay ??= [];
 
-        if (isRgb.current) {
-          const callback_color = ([r, g, b], { pause }) => {
-            if (!document.body.contains(e)) pause();
-            e.style.stroke = `rgb(${r},${g},${b})`;
-            isGlowing.current
-              ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
-              : e.style.removeProperty('filter');
-          };
-          const a_rgb = animare(
-            {
-              from: [255, 0, 0],
-              to: [0, 0, 255],
-              duration: 2000,
-              delay: delay.current * i + g * delay.current,
-              delayOnce: true,
-              autoPlay: false,
-            },
-            callback_color
-          )
-            .next({ to: [0, 255, 0] })
-            .next({ to: [255, 0, 0] });
-          a_rgb.setTimelineOptions({ repeat: -1 });
-          animationsRgb.current.push(a_rgb);
-        }
+        op.animation.from.push(...from);
+        op.animation.to.push(...to);
+        op.animation.delay.push(...new Array(4).fill(delay.current * i + g * delay.current));
+
+        // rgb
+        op.rgb ??= {};
+        op.rgb.from ??= [];
+        op.rgb.to ??= [];
+        op.rgb.to[0] ??= [];
+        op.rgb.to[1] ??= [];
+        op.rgb.delay ??= [];
+
+        op.rgb.from.push(...[255, 0, 0]);
+        op.rgb.to[0].push(...[0, 0, 255]);
+        op.rgb.to[1].push(...[0, 255, 0]);
+        op.rgb.delay.push(...new Array(3).fill(delay.current * i + g * delay.current));
       }
     }
+
+    // rotate
+    {
+      const callback_rotate = v => {
+        for (let i = 0; i < v.length; i++) {
+          clockGroups[i].style.transform = `rotate(${v[i]}deg)`;
+        }
+      };
+
+      const a_rotate = animare(
+        {
+          to: op.rotate.to,
+          duration: op.rotate.duration,
+          direction: 'alternate',
+          autoPlay: false,
+          repeat: -1,
+        },
+        callback_rotate
+      );
+      animationsRotate.current = a_rotate;
+    }
+
+    // animation
+    {
+      const callback = (v, { pause }) => {
+        for (let i = 0; i < v.length; i = i + 4) {
+          const e = clocks[i / 4];
+          if (!document.body.contains(e)) pause();
+          e.setAttribute('d', `M ${v[i]} ${v[i + 1]} L ${v[i + 2]} ${v[i + 3]}`);
+        }
+      };
+      const a = animare(
+        {
+          from: op.animation.from,
+          to: op.animation.to,
+          duration: duration.current,
+          delay: op.animation.delay,
+          delayOnce: true,
+          autoPlay: false,
+          ease: getEase,
+        },
+        callback
+      ).next({ to: op.animation.from, delay: op.animation.delay, delayOnce: true });
+      a.setTimelineOptions({ repeat: -1 });
+      animations.current = a;
+    }
+
+    // rgb
+    {
+      const callback_color = (v, { pause }) => {
+        for (let i = 0; i < v.length; i = i + 3) {
+          const e = clocks[i / 3];
+          if (!document.body.contains(e)) pause();
+          e.style.stroke = `rgb(${v[i]},${v[i + 1]},${v[i + 2]})`;
+          isGlowing.current
+            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${v[i]},${v[i + 1]},${v[i + 2]}))`)
+            : e.style.removeProperty('filter');
+        }
+      };
+      const a_rgb = animare(
+        {
+          from: op.rgb.from,
+          to: op.rgb.to[0],
+          duration: 2000,
+          delay: op.rgb.delay,
+          delayOnce: true,
+          autoPlay: false,
+        },
+        callback_color
+      )
+        .next({ to: op.rgb.to[1] })
+        .next({ to: op.rgb.from });
+      a_rgb.setTimelineOptions({ repeat: -1 });
+      animationsRgb.current = a_rgb;
+    }
+
     play();
   };
 
   const setupAnimation = () => {
     stop();
-    animations.current = [];
-    animationsRgb.current = [];
+    animations.current = null;
+    animationsRgb.current = null;
+    animationsRotate.current = null;
     clearTimeout(timer.current);
     timer.current = setTimeout(createAnimations, 700);
   };
@@ -189,19 +238,27 @@ export default function Clock() {
   };
 
   const play = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.play();
-      animationsRotate.current[i]?.play();
-      animationsRgb.current?.[i]?.play();
-    }
+    if (isAnimation.current) animations.current?.play?.();
+    if (isRotating.current) animationsRotate.current?.play?.();
+    if (isRgb.current) animationsRgb.current?.play?.();
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.stop(0);
-      animationsRotate.current[i]?.stop(0);
-      animationsRgb.current?.[i]?.stop(0);
-    }
+    if (isAnimation.current) animations.current?.stop?.();
+    if (isRotating.current) animationsRotate.current?.stop?.();
+    if (isRgb.current) animationsRgb.current?.stop?.();
+  };
+
+  const pause = () => {
+    if (isAnimation.current) animations.current?.pause?.();
+    if (isRotating.current) animationsRotate.current?.pause?.();
+    if (isRgb.current) animationsRgb.current?.pause?.();
+  };
+
+  const resume = () => {
+    if (isAnimation.current) animations.current?.resume?.();
+    if (isRotating.current) animationsRotate.current?.resume?.();
+    if (isRgb.current) animationsRgb.current?.resume?.();
   };
 
   useEffect(() => {
@@ -217,12 +274,12 @@ export default function Clock() {
     if (params.backgroundColor) onBgColorChange('#' + params.backgroundColor);
     if (params.zoom) onZoomChange(params.zoom);
 
-    window.addEventListener('focus', play);
-    window.addEventListener('blur', stop);
+    window.addEventListener('focus', resume);
+    window.addEventListener('blur', pause);
 
     return () => {
-      window.removeEventListener('focus', play);
-      window.removeEventListener('blur', stop);
+      window.removeEventListener('focus', resume);
+      window.removeEventListener('blur', pause);
     };
   }, []);
 
@@ -246,7 +303,7 @@ export default function Clock() {
   const onDurationChange = e => {
     duration.current = +e.target.value;
     addUrlQuery({ duration: +e.target.value });
-    animations.current.forEach(a => a?.setOptions({ duration: duration.current }));
+    setupAnimation();
   };
 
   const onDelayChange = e => {
@@ -267,21 +324,13 @@ export default function Clock() {
     if (e?.target?.value) addUrlQuery({ zoom: +e.target.value });
   };
 
-  const onRotateChange = async e => {
+  const onRotateChange = e => {
     isRotating.current = e.target.checked;
     addUrlQuery({ isRotating: e.target.checked });
-    if (isRotating.current) {
-      setupAnimation();
-    } else {
-      animationsRotate.current.forEach(a => a.stop(0));
-      await sleep(50);
-      animationsRotate.current = [];
-      const groups = document.querySelectorAll('.Clock-group');
-      for (let i = 0; i < groups.length; i++) groups[i].style.transform = `rotate(${+groups[i].dataset.angle}deg)`;
-    }
+    isRotating.current ? animationsRotate.current?.resume?.() : animationsRotate.current?.pause?.();
   };
 
-  const onRGBChange = async e => {
+  const onRGBChange = e => {
     const clocks = document.querySelectorAll('.Clock');
 
     isRgb.current = e.target.checked;
@@ -296,14 +345,11 @@ export default function Clock() {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
-      setupAnimation();
+      animationsRgb.current?.resume?.();
       return;
     }
 
-    animationsRgb.current.forEach(a => a?.stop(0));
-    animationsRgb.current = [];
-
-    await sleep(100);
+    animationsRgb.current?.pause?.();
 
     clocks.forEach(e => {
       e.style.removeProperty('stroke');

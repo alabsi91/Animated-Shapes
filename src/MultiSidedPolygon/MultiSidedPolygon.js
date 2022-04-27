@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef } from 'react';
-import { addUrlQuery, parseUrl, sleep, useLazyCss, invertColor, generateColor } from '..';
+import { addUrlQuery, parseUrl, useLazyCss, invertColor, generateColor } from '..';
 import styles from './MultiSidedPolygon.lazy.css';
 
 export default function MultiSidedPolygon() {
@@ -64,89 +64,142 @@ export default function MultiSidedPolygon() {
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
+    const op = {};
+
     for (let i = 0; i < MultiSidedPolygons.length; i++) {
       const e = MultiSidedPolygons[i];
 
-      if (isRotating.current) {
-        const callback = ([r], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.transform = `rotate(${r}deg)`;
-        };
+      // rotate
+      op.rotate ??= {};
+      op.rotate.to ??= [];
+      op.rotate.to[0] ??= [];
+      op.rotate.to[1] ??= [];
+      op.rotate.delay ??= [];
 
-        const a_rotate = animare(
-          {
-            to: 360,
-            duration: duration.current,
-            delay: i * delay.current,
-            delayOnce: true,
-            direction: 'alternate',
-            repeat: -1,
-            autoPlay: false,
-            ease: getEase,
-          },
-          callback
-        );
-        animations.current.push(a_rotate);
-      }
+      op.rotate.to[0].push(360);
+      op.rotate.to[1].push(0);
+      op.rotate.delay.push(i * delay.current);
 
-      if (isDash.current) {
-        const length = e.getTotalLength();
-        e.style.strokeDasharray = length / sides + 'px';
+      // dash
+      const length = e.getTotalLength();
+      if (isDash.current) e.style.strokeDasharray = length / sides + 'px';
+      op.dash ??= {};
+      op.dash.delay ??= [];
+      op.dash.to ??= [];
+      op.dash.to[0] ??= [];
+      op.dash.to[1] ??= [];
+      op.dash.from ??= [];
 
-        const callback_dash = ([o], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.strokeDashoffset = o + 'px';
-        };
+      op.dash.delay.push(i * delay.current * 2);
+      op.dash.to[0].push(length);
+      op.dash.from.push(-length);
+      op.dash.to[1].push(0);
 
-        const a_dash = animare(
-          {
-            from: 0,
-            to: length,
-            duration: duration.current,
-            delay: i * delay.current * 2,
-            direction: 'alternate',
-            autoPlay: false,
-            ease: getEase,
-          },
-          callback_dash
-        ).next({ from: -length, to: 0 });
-        a_dash.setTimelineOptions({ repeat: -1 });
-        animationsDash.current.push(a_dash);
-      }
+      // rgb
+      op.rgb ??= {};
+      op.rgb.delay ??= [];
+      op.rgb.to ??= [];
+      op.rgb.to[0] ??= [];
+      op.rgb.to[1] ??= [];
+      op.rgb.to[2] ??= [];
+      op.rgb.from ??= [];
 
-      if (isRgb.current) {
-        const callback_color = ([r, g, b], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.stroke = `rgb(${r},${g},${b})`;
-          isGlowing.current
-            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
-            : e.style.removeProperty('filter');
-        };
-        const a_rgb = animare(
-          {
-            from: [255, 0, 0],
-            to: [0, 0, 255],
-            duration: 2000,
-            delay: i * delay.current,
-            delayOnce: true,
-            autoPlay: false,
-          },
-          callback_color
-        )
-          .next({ to: [0, 255, 0] })
-          .next({ to: [255, 0, 0] });
-        a_rgb.setTimelineOptions({ repeat: -1 });
-        animationsRgb.current.push(a_rgb);
-      }
+      op.rgb.delay.push(...new Array(3).fill(i * delay.current));
+      op.rgb.from.push(...[255, 0, 0]);
+      op.rgb.to[0].push(...[0, 0, 255]);
+      op.rgb.to[1].push(...[0, 255, 0]);
     }
+
+    // rotate
+    {
+      const callback_rotate = (v, { pause }) => {
+        for (let i = 0; i < v.length; i++) {
+          const e = MultiSidedPolygons[i];
+          if (!document.body.contains(e)) pause();
+          e.style.transform = `rotate(${v[i]}deg)`;
+        }
+      };
+
+      const a_rotate = animare(
+        {
+          to: op.rotate.to[0],
+          duration: duration.current,
+          delay: op.rotate.delay,
+          autoPlay: false,
+          ease: getEase,
+          type: 'wait',
+        },
+        callback_rotate
+      );
+      a_rotate.next({ delay: op.rotate.delay, to: op.rotate.to[1], type: 'wait' });
+      a_rotate.setTimelineOptions({ repeat: -1 });
+      animations.current = a_rotate;
+    }
+
+    // dash
+    {
+      const callback_dash = (v, { pause }) => {
+        for (let i = 0; i < v.length; i++) {
+          const e = MultiSidedPolygons[i];
+          if (!document.body.contains(e)) pause();
+          e.style.strokeDashoffset = v[i] + 'px';
+        }
+      };
+
+      const a_dash = animare(
+        {
+          to: op.dash.to[0],
+          duration: duration.current,
+          delay: op.dash.delay,
+          direction: 'alternate',
+          autoPlay: false,
+          ease: getEase,
+        },
+        callback_dash
+      ).next({ from: op.dash.from, to: op.dash.to[1] });
+      a_dash.setTimelineOptions({ repeat: -1 });
+
+      animationsDash.current = a_dash;
+    }
+
+    // rgb
+    {
+      const callback_color = (v, { pause }) => {
+        for (let i = 0; i < v.length; i = i + 3) {
+          const index = i / 3;
+          const e = MultiSidedPolygons[index];
+          if (!document.body.contains(e)) pause();
+          e.style.stroke = `rgb(${v[i]},${v[i + 1]},${v[i + 2]})`;
+          isGlowing.current
+            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${v[i]},${v[i + 1]},${v[i + 2]}))`)
+            : e.style.removeProperty('filter');
+        }
+      };
+      const a_rgb = animare(
+        {
+          from: op.rgb.from,
+          to: op.rgb.to[0],
+          duration: 2000,
+          delay: op.rgb.delay,
+          delayOnce: true,
+          autoPlay: false,
+        },
+        callback_color
+      )
+        .next({ to: op.rgb.to[1] })
+        .next({ to: op.rgb.from });
+      a_rgb.setTimelineOptions({ repeat: -1 });
+      animationsRgb.current = a_rgb;
+    }
+
     play();
   };
 
   const setupAnimation = () => {
     stop();
-    animations.current = [];
-    animationsRgb.current = [];
-    animationsDash.current = [];
+    animations.current = null;
+    animationsRgb.current = null;
+    animationsDash.current = null;
     clearTimeout(timer.current);
     timer.current = setTimeout(createAnimations, 300);
   };
@@ -166,21 +219,27 @@ export default function MultiSidedPolygon() {
   };
 
   const play = () => {
-    const polygons = document.querySelectorAll('.MultiSidedPolygon').length;
-    for (let i = 0; i < polygons; i++) {
-      animations.current[i]?.play();
-      animationsRgb.current?.[i]?.play();
-      animationsDash.current?.[i]?.play();
-    }
+    if (isRotating.current) animations.current?.play?.();
+    if (isRgb.current) animationsRgb.current?.play?.();
+    if (isDash.current) animationsDash.current?.play?.();
   };
 
   const stop = () => {
-    const polygons = document.querySelectorAll('.MultiSidedPolygon').length;
-    for (let i = 0; i < polygons; i++) {
-      animations.current[i]?.stop(0);
-      animationsRgb.current?.[i]?.stop(0);
-      animationsDash.current?.[i]?.stop(0);
-    }
+    if (isRotating.current) animations.current?.stop?.();
+    if (isRgb.current) animationsRgb.current?.stop?.();
+    if (isDash.current) animationsDash.current?.stop?.();
+  };
+
+  const pause = () => {
+    if (isRotating.current) animations.current?.pause?.();
+    if (isRgb.current) animationsRgb.current?.pause?.();
+    if (isDash.current) animationsDash.current?.pause?.();
+  };
+
+  const resume = () => {
+    if (isRotating.current) animations.current?.resume?.();
+    if (isRgb.current) animationsRgb.current?.resume?.();
+    if (isDash.current) animationsDash.current?.resume?.();
   };
 
   useEffect(() => {
@@ -196,12 +255,12 @@ export default function MultiSidedPolygon() {
     if (params.backgroundColor) onBgColorChange('#' + params.backgroundColor);
     if (params.zoom) onZoomChange(params.zoom);
 
-    window.addEventListener('focus', play);
-    window.addEventListener('blur', stop);
+    window.addEventListener('focus', resume);
+    window.addEventListener('blur', pause);
 
     return () => {
-      window.removeEventListener('focus', play);
-      window.removeEventListener('blur', stop);
+      window.removeEventListener('focus', resume);
+      window.removeEventListener('blur', pause);
     };
   }, []);
 
@@ -224,10 +283,7 @@ export default function MultiSidedPolygon() {
   const onDurationChange = e => {
     duration.current = +e.target.value;
     addUrlQuery({ duration: +e.target.value });
-    for (let i = 0; i < count; i++) {
-      animations.current[i]?.setOptions({ duration: duration.current });
-      animationsDash.current[i]?.setOptions({ duration: duration.current });
-    }
+    setupAnimation();
   };
 
   const onDelayChange = e => {
@@ -252,24 +308,26 @@ export default function MultiSidedPolygon() {
     isDash.current = e.target.checked;
     addUrlQuery({ isDash: e.target.checked });
     if (!isDash.current) {
-      animationsDash.current.forEach(a => a.stop(0));
-      animationsDash.current = [];
+      animationsDash.current?.pause?.();
       document.querySelectorAll('.MultiSidedPolygon').forEach(e => {
         e.style.removeProperty('stroke-dasharray');
       });
-    } else setupAnimation();
+    } else {
+      document.querySelectorAll('.MultiSidedPolygon').forEach(e => {
+        const length = e.getTotalLength();
+        e.style.strokeDasharray = length / sides + 'px';
+      });
+      animationsDash.current?.resume?.();
+    }
   };
 
   const onRotateChange = e => {
     isRotating.current = e.target.checked;
     addUrlQuery({ isRotating: e.target.checked });
-    if (!isRotating.current) {
-      animations.current.forEach(a => a.stop(0));
-      animations.current = [];
-    } else setupAnimation();
+    isRotating.current ? animations.current?.play?.() : animations.current?.stop?.();
   };
 
-  const onRGBChange = async e => {
+  const onRGBChange = e => {
     const polygons = document.querySelectorAll('.MultiSidedPolygon');
 
     isRgb.current = e.target.checked;
@@ -284,14 +342,11 @@ export default function MultiSidedPolygon() {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
-      setupAnimation();
+      animationsRgb.current.resume?.();
       return;
     }
 
-    animationsRgb.current.forEach(a => a.stop(0));
-    animationsRgb.current = [];
-
-    await sleep(100);
+    animationsRgb.current.pause?.();
 
     polygons.forEach(e => {
       e.style.removeProperty('stroke');

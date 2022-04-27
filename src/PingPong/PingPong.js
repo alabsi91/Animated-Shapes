@@ -37,12 +37,12 @@ export default function PingPong() {
       duration,
       autoPlay: false,
     };
-    const toPaddleCb = ([x, y], { isLastFrame, pause }) => {
+    const toPaddleCb = ([x, y], { isFinished, pause }) => {
       if (!document.body.contains(ball)) pause();
       ball.style.left = x + 'px';
       ball.style.top = y + 'px';
       if (collisionDetection()) onCollision(x, y);
-      if (isLastFrame) gameOver();
+      if (isFinished) gameOver();
     };
     const toPaddle = animare(toPaddleOptions, toPaddleCb);
 
@@ -58,7 +58,7 @@ export default function PingPong() {
     };
 
     const onCollision = (x, y) => {
-      toPaddle.pause();
+      toPaddle.stop();
       hitAudio.play();
       currentScore += 50;
       score.innerHTML = 'Score: ' + currentScore;
@@ -91,11 +91,11 @@ export default function PingPong() {
       duration,
       autoPlay: false,
     };
-    const toWallCb = ([x, y], { isLastFrame, pause }) => {
+    const toWallCb = ([x, y], { isFinished, pause }) => {
       if (!document.body.contains(ball)) pause();
       ball.style.left = x + 'px';
       ball.style.top = y + 'px';
-      if (isLastFrame) {
+      if (isFinished) {
         hitAudio.play();
         randomToPaddle = random(0, height - ballSize);
         toPaddle.setOptions({ from: [0, randomToWall], to: [window.innerWidth, randomToPaddle] });
@@ -104,10 +104,10 @@ export default function PingPong() {
     };
     const toWall = animare(toWallOptions, toWallCb);
 
-    const wallPaddleCb = ([y], { isLastFrame, pause }) => {
+    const wallPaddleCb = ([y], { isFinished, pause }) => {
       if (!document.body.contains(ball)) pause();
       wall.style.marginTop = y - wallHeight / 2 + 'px';
-      if (isLastFrame) wallLastPosition = y;
+      if (isFinished) wallLastPosition = y;
     };
     const wallPaddle = animare({ from: wallLastPosition, to: 0, duration, autoPlay: false }, wallPaddleCb);
 

@@ -72,58 +72,101 @@ export default function Trinity() {
       });
     }
 
+    const op = {};
+
     for (let i = 0; i < Trinitys.length; i++) {
       const e = Trinitys[i];
 
-      const length = e.getTotalLength();
+      const length = +e.getTotalLength();
       e.style.strokeDasharray = length / 3 + 'px';
 
       if (isAnimation.current) {
-        const callback = ([o], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.strokeDashoffset = o + 'px';
-        };
+        op.animation ??= {};
+        op.animation.to ??= [];
+        op.animation.to[0] ??= [];
+        op.animation.to[1] ??= [];
+        op.animation.from ??= [];
+        op.animation.delay ??= [];
 
-        const a = animare(
-          { to: length, duration: duration.current, delay: i * delay.current, autoPlay: false, ease: getEase },
-          callback
-        ).next({ from: -length, to: 0 });
-        a.setTimelineOptions({ repeat: -1 });
-        animations.current.push(a);
+        op.animation.to[0].push(length);
+        op.animation.to[1].push(0); // next
+        op.animation.from.push(-length); // next
+        op.animation.delay.push(delay.current * i);
       }
 
-      if (isRgb.current) {
-        const callback_color = ([r, g, b], { pause }) => {
-          if (!document.body.contains(e)) pause();
-          e.style.stroke = `rgb(${r},${g},${b})`;
-          isGlowing.current
-            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
-            : e.style.removeProperty('filter');
-        };
-        const a_rgb = animare(
-          {
-            from: [255, 0, 0],
-            to: [0, 0, 255],
-            duration: 4000,
-            delay: i * delay.current,
-            delayOnce: true,
-            autoPlay: false,
-          },
-          callback_color
-        )
-          .next({ to: [0, 255, 0] })
-          .next({ to: [255, 0, 0] });
-        a_rgb.setTimelineOptions({ repeat: -1 });
-        animationsRgb.current.push(a_rgb);
-      }
+      op.rgb ??= {};
+      op.rgb.from ??= [];
+      op.rgb.to ??= [];
+      op.rgb.to[0] ??= [];
+      op.rgb.to[1] ??= [];
+      op.rgb.delay ??= [];
+
+      op.rgb.from.push(...[255, 0, 0]);
+      op.rgb.to[0].push(...[0, 0, 255]);
+      op.rgb.to[1].push(...[0, 255, 0]);
+      op.rgb.delay.push(...new Array(3).fill(delay.current * i));
     }
+
+    if (isAnimation.current) {
+      const callback = (v, { pause }) => {
+        for (let i = 0; i < v.length; i++) {
+          const e = Trinitys[i];
+          if (!document.body.contains(e)) pause();
+          e.style.strokeDashoffset = v[i] + 'px';
+        }
+      };
+
+      const a = animare(
+        {
+          to: op.animation.to[0],
+          duration: duration.current,
+          delay: op.animation.delay,
+          autoPlay: false,
+          ease: getEase,
+        },
+        callback
+      ).next({ from: op.animation.from, to: op.animation.to[1] });
+      a.setTimelineOptions({ repeat: -1 });
+      animations.current = a;
+    }
+
+    // rgb
+    {
+      const callback_color = (v, { pause }) => {
+        for (let i = 0; i < v.length; i = i + 3) {
+          const e = Trinitys[i / 3];
+          if (!document.body.contains(e)) pause();
+          e.style.stroke = `rgb(${v[i]},${v[i + 1]},${v[i + 2]})`;
+          isGlowing.current
+            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${v[i]},${v[i + 1]},${v[i + 2]}))`)
+            : e.style.removeProperty('filter');
+        }
+      };
+
+      const a_rgb = animare(
+        {
+          from: op.rgb.from,
+          to: op.rgb.to[0],
+          duration: 4000,
+          delay: op.rgb.delay,
+          delayOnce: true,
+          autoPlay: false,
+        },
+        callback_color
+      )
+        .next({ to: op.rgb.to[1] })
+        .next({ to: op.rgb.from });
+      a_rgb.setTimelineOptions({ repeat: -1 });
+      animationsRgb.current = a_rgb;
+    }
+
     play();
   };
 
   const setupAnimation = () => {
     stop();
-    animations.current = [];
-    animationsRgb.current = [];
+    animations.current = null;
+    animationsRgb.current = null;
     clearTimeout(timer.current);
     timer.current = setTimeout(createAnimations, 300);
   };
@@ -143,18 +186,23 @@ export default function Trinity() {
   };
 
   const play = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.setOptions({ delay: i * delay.current });
-      animations.current[i].play();
-      animationsRgb.current?.[i]?.play();
-    }
+    animations.current?.play?.();
+    if (isRgb.current) animationsRgb.current?.play?.();
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.stop(0);
-      animationsRgb.current?.[i]?.stop(0);
-    }
+    animations.current?.stop?.();
+    if (isRgb.current) animationsRgb.current?.stop?.();
+  };
+
+  const pause = () => {
+    animations.current?.pause?.();
+    if (isRgb.current) animationsRgb.current?.pause?.();
+  };
+
+  const resume = () => {
+    animations.current?.resume?.();
+    if (isRgb.current) animationsRgb.current?.resume?.();
   };
 
   useEffect(() => {
@@ -170,12 +218,12 @@ export default function Trinity() {
     if (params.backgroundColor) onBgColorChange('#' + params.backgroundColor);
     if (params.zoom) onZoomChange(params.zoom);
 
-    window.addEventListener('focus', play);
-    window.addEventListener('blur', stop);
+    window.addEventListener('focus', resume);
+    window.addEventListener('blur', pause);
 
     return () => {
-      window.removeEventListener('focus', play);
-      window.removeEventListener('blur', stop);
+      window.removeEventListener('focus', resume);
+      window.removeEventListener('blur', pause);
     };
   }, []);
 
@@ -193,9 +241,7 @@ export default function Trinity() {
   const onDurationChange = e => {
     duration.current = +e.target.value;
     addUrlQuery({ duration: +e.target.value });
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i]?.setOptions({ duration: duration.current });
-    }
+    setupAnimation();
   };
 
   const onDelayChange = e => {
@@ -222,13 +268,13 @@ export default function Trinity() {
     if (isRotating.current) {
       animationsRotate.current?.play();
     } else {
-      animationsRotate.current?.stop(0);
-      await sleep(50);
+      animationsRotate.current?.stop?.();
+      await sleep(10);
       document.querySelector('.Trinity-svg').style.removeProperty('transform');
     }
   };
 
-  const onRGBChange = async e => {
+  const onRGBChange = e => {
     const lines = document.querySelectorAll('.Trinity');
 
     isRgb.current = e.target.checked;
@@ -243,14 +289,11 @@ export default function Trinity() {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
-      setupAnimation();
+      animationsRgb.current?.resume?.();
       return;
     }
 
-    animationsRgb.current.forEach(a => a.stop(0));
-    animationsRgb.current = [];
-
-    await sleep(100);
+    animationsRgb.current?.pause?.();
 
     lines.forEach(e => {
       e.style.removeProperty('stroke');

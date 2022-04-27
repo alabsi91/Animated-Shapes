@@ -27,12 +27,7 @@ export default function Cuboid() {
       const color2 = generateColor();
 
       result[i > 0 ? 'unshift' : 'push'](
-        <div
-          key={Math.random()}
-          className='scene'
-          data-order={order}
-          style={{ transform: 'rotateX(180deg) rotateY(0deg)' }}
-        >
+        <div key={Math.random()} className='scene' data-order={order} style={{ transform: 'rotateX(180deg) rotateY(0deg)' }}>
           <div
             className='shape cuboid-1 cub-1'
             style={{ transform: `translate3D(0px, ${pos}px, 0px) rotateX(90deg) rotateY(0deg) rotateZ(0deg)` }}
@@ -106,45 +101,67 @@ export default function Cuboid() {
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
 
+    const op = {
+      to: [],
+      delay: [],
+      nextTo: [],
+    };
+
     for (let i = 0; i < scenes.length; i++) {
       const e = scenes[i];
       const order = +e.dataset.order;
-      // eslint-disable-next-line no-loop-func
-      const callback = ([ry], { pause, progress, setOptions }) => {
-        if (!document.contains(e)) pause();
-        e.style.transform = `rotateX(180deg) rotateY(${ry}deg)`;
-        if (progress === 100) setOptions({ delay: (scenes.length - 1 - order) * delay.current + order * delay.current });
-      };
-
-      const a = animare(
-        { from: 0, to: 180, duration: duration.current, delay: order * delay.current, autoPlay: false, ease: getEase },
-        callback
-      ).next({
-        to: 0,
-        delay: (scenes.length - 1 - order) * delay.current + order * delay.current,
-      });
-      a.setTimelineOptions({ repeat: -1 });
-      animations.current[order] = a;
+      op.to.push(180);
+      op.nextTo.push(0);
+      op.delay.push(order * delay.current);
     }
+
+    const callback = (v, { pause }) => {
+      for (let i = 0; i < v.length; i++) {
+        const e = scenes[i];
+        if (!document.contains(e)) pause();
+        e.style.transform = `rotateX(180deg) rotateY(${v[i]}deg)`;
+      }
+    };
+
+    const a = animare(
+      {
+        to: op.to,
+        duration: duration.current,
+        delay: op.delay,
+        autoPlay: false,
+        type: 'wait',
+        ease: getEase,
+      },
+      callback
+    ).next({ to: op.nextTo, delay: op.delay, type: 'wait' });
+
+    a.setTimelineOptions({ repeat: -1 });
+
+    animations.current = a;
     play();
   };
 
   const setupAnimation = () => {
     stop();
-    animations.current = [];
+    animations.current = null;
     clearTimeout(timer.current);
     timer.current = setTimeout(createAnimations, 300);
   };
 
   const play = () => {
-    for (let i = 0; i < animations.current.length; i++) {
-      animations.current[i].setOptions({ delay: i * delay.current });
-      animations.current[i].play();
-    }
+    animations.current?.play?.();
   };
 
   const stop = () => {
-    for (let i = 0; i < animations.current.length; i++) animations.current[i].stop();
+    animations.current?.stop?.();
+  };
+
+  const pause = () => {
+    animations.current?.pause?.();
+  };
+
+  const resume = () => {
+    animations.current?.resume?.();
   };
 
   useEffect(() => {
@@ -161,12 +178,12 @@ export default function Cuboid() {
     if (params.color) document.body.style.setProperty('--color', '#' + params.color);
     if (params.backgroundColor) onBgColorChange('#' + params.backgroundColor);
 
-    window.addEventListener('focus', play);
-    window.addEventListener('blur', stop);
+    window.addEventListener('focus', resume);
+    window.addEventListener('blur', pause);
 
     return () => {
-      window.removeEventListener('focus', play);
-      window.removeEventListener('blur', stop);
+      window.removeEventListener('focus', resume);
+      window.removeEventListener('blur', pause);
     };
   }, []);
 

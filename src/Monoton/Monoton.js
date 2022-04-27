@@ -2,7 +2,7 @@
 /* eslint-disable no-loop-func */
 import { animare, ease } from 'animare';
 import { useEffect, useState, useRef, cloneElement } from 'react';
-import { addUrlQuery, parseUrl, useLazyCss, sleep, invertColor, generateColor } from '..';
+import { addUrlQuery, parseUrl, useLazyCss, invertColor, generateColor } from '..';
 import Letters from '../Monoton/Letters';
 import styles from './Monoton.lazy.css';
 
@@ -60,8 +60,11 @@ export default function Monoton() {
 
   const createAnimations = () => {
     const letters = document.querySelectorAll('.Monoton-svg');
+    const pathes = document.querySelectorAll('.Monoton-svg path');
     let getEase = easing.current.split('.');
     getEase = getEase.length === 1 ? ease.linear : ease[getEase[1]][getEase[2]];
+
+    const op = {};
 
     for (let i = 0; i < letters.length; i++) {
       const Monotons = letters[i].childNodes;
@@ -69,71 +72,109 @@ export default function Monoton() {
       for (let p = 0; p < Monotons.length; p++) {
         const e = Monotons[p];
 
+        // dash
+        const length = e.getTotalLength();
         if (isDash.current) {
-          const length = e.getTotalLength();
           e.style.strokeDasharray = length / 2 + 'px';
           e.style.strokeDashoffset = length + 'px';
-
-          const callback_dash = ([o, a], { pause }) => {
-            if (!document.body.contains(e)) pause();
-            e.style.strokeDashoffset = o + 'px';
-            e.style.strokeDasharray = a + 'px';
-          };
-
-          const a_dash = animare(
-            {
-              from: [length, length / 2],
-              to: [0, length],
-              duration: duration.current,
-              delay: p * delay.current,
-              autoPlay: false,
-              ease: getEase,
-            },
-            callback_dash
-          )
-            .next({ to: [-length, length / 2] })
-            .next({ to: [0, length] })
-            .next({ to: [length, length / 2] });
-
-          a_dash.setTimelineOptions({ repeat: -1 });
-          animationsDash.current.push(a_dash);
         }
 
-        if (isRgb.current) {
-          const callback_color = ([r, g, b], { pause }) => {
-            if (!document.body.contains(e)) pause();
-            e.style.stroke = `rgb(${r},${g},${b})`;
-            isGlowing.current
-              ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${r},${g},${b}))`)
-              : e.style.removeProperty('filter');
-          };
+        op.dash ??= {};
+        op.dash.from ??= [];
+        op.dash.to ??= [];
+        op.dash.to[0] ??= [];
+        op.dash.to[1] ??= [];
+        op.dash.delay ??= [];
 
-          const a_rgb = animare(
-            {
-              from: [255, 0, 0],
-              to: [0, 0, 255],
-              duration: 2000,
-              delay: p * delay.current + i * 50,
-              delayOnce: true,
-              autoPlay: false,
-            },
-            callback_color
-          )
-            .next({ to: [0, 255, 0] })
-            .next({ to: [255, 0, 0] });
+        op.dash.from.push(...[length, length / 2]);
+        op.dash.to[0].push(...[0, length]);
+        op.dash.to[1].push(...[-length, length / 2]);
+        op.dash.delay.push(...new Array(2).fill(delay.current * p));
 
-          a_rgb.setTimelineOptions({ repeat: -1 });
-          animationsRgb.current.push(a_rgb);
-        }
+        // rgb
+        op.rgb ??= {};
+        op.rgb.delay ??= [];
+        op.rgb.to ??= [];
+        op.rgb.to[0] ??= [];
+        op.rgb.to[1] ??= [];
+        op.rgb.to[2] ??= [];
+        op.rgb.from ??= [];
+
+        op.rgb.delay.push(...new Array(3).fill(i * delay.current));
+        op.rgb.from.push(...[255, 0, 0]);
+        op.rgb.to[0].push(...[0, 0, 255]);
+        op.rgb.to[1].push(...[0, 255, 0]);
       }
     }
+    // dash
+    {
+      const callback_dash = (v, { pause }) => {
+        for (let i = 0; i < v.length; i = i + 2) {
+          const e = pathes[i / 2];
+          if (!document.body.contains(e)) pause();
+          e.style.strokeDashoffset = v[i] + 'px';
+          e.style.strokeDasharray = v[i + 1] + 'px';
+        }
+      };
+
+      const a_dash = animare(
+        {
+          from: op.dash.from,
+          to: op.dash.to[0],
+          duration: duration.current,
+          delay: op.dash.delay,
+          autoPlay: false,
+          ease: getEase,
+        },
+        callback_dash
+      )
+        .next({ to: op.dash.to[1] })
+        .next({ to: op.dash.to[0] })
+        .next({ to: op.dash.from });
+
+      a_dash.setTimelineOptions({ repeat: -1 });
+      animationsDash.current = a_dash;
+    }
+
+    // rgb
+    {
+      const callback_color = (v, { pause }) => {
+        for (let i = 0; i < v.length; i = i + 3) {
+          const e = pathes[i / 3];
+          if (!document.body.contains(e)) pause();
+          e.style.stroke = `rgb(${v[i]},${v[i + 1]},${v[i + 2]})`;
+          isGlowing.current
+            ? (e.style.filter = `drop-shadow(0px 0px var(--glow-trength) rgb(${v[i]},${v[i + 1]},${v[i + 2]}))`)
+            : e.style.removeProperty('filter');
+        }
+      };
+
+      const a_rgb = animare(
+        {
+          from: op.rgb.from,
+          to: op.rgb.to[0],
+          duration: 2000,
+          delay: op.rgb.delay,
+          delayOnce: true,
+          autoPlay: false,
+        },
+        callback_color
+      )
+        .next({ to: op.rgb.to[1] })
+        .next({ to: op.rgb.from });
+
+      a_rgb.setTimelineOptions({ repeat: -1 });
+
+      animationsRgb.current = a_rgb;
+    }
+
     play();
   };
 
   const setupAnimation = () => {
     stop();
-    animationsRgb.current = [];
-    animationsDash.current = [];
+    animationsRgb.current = null;
+    animationsDash.current = null;
     clearTimeout(timer.current);
     timer.current = setTimeout(createAnimations, 300);
   };
@@ -153,19 +194,23 @@ export default function Monoton() {
   };
 
   const play = () => {
-    const Monotons = document.querySelectorAll('.Monoton');
-    for (let i = 0; i < Monotons.length; i++) {
-      animationsDash.current[i]?.play();
-      animationsRgb.current?.[i]?.play();
-    }
+    if (isDash.current) animationsDash.current?.play?.();
+    if (isRgb.current) animationsRgb.current?.play?.();
   };
 
   const stop = () => {
-    const Monotons = document.querySelectorAll('.Monoton');
-    for (let i = 0; i < Monotons.length; i++) {
-      animationsDash.current?.[i]?.stop(0);
-      animationsRgb.current?.[i]?.stop(0);
-    }
+    if (isDash.current) animationsDash.current?.stop?.();
+    if (isRgb.current) animationsRgb.current?.stop?.();
+  };
+
+  const pause = () => {
+    if (isDash.current) animationsDash.current?.pause?.();
+    if (isRgb.current) animationsRgb.current?.pause?.();
+  };
+
+  const resume = () => {
+    if (isDash.current) animationsDash.current?.resume?.();
+    if (isRgb.current) animationsRgb.current?.resume?.();
   };
 
   useEffect(() => {
@@ -182,12 +227,12 @@ export default function Monoton() {
     if (params.zoom) document.body.style.setProperty('--zoom', params.zoom + '%');
     if (params.space) document.body.style.setProperty('--space', params.space + 'px');
 
-    window.addEventListener('focus', play);
-    window.addEventListener('blur', stop);
+    window.addEventListener('focus', resume);
+    window.addEventListener('blur', pause);
 
     return () => {
-      window.removeEventListener('focus', play);
-      window.removeEventListener('blur', stop);
+      window.removeEventListener('focus', resume);
+      window.removeEventListener('blur', pause);
     };
   }, []);
 
@@ -234,15 +279,22 @@ export default function Monoton() {
   const onDashChange = async e => {
     isDash.current = e.target.checked;
     addUrlQuery({ isDash: e.target.checked });
-    if (!isDash.current) {
-      animationsDash.current.forEach(a => a.stop(0));
-      animationsDash.current = [];
-      await sleep(50);
+    if (isDash.current) {
+      animationsDash.current?.resume?.();
+      document.querySelectorAll('.Monoton').forEach(e => {
+        const length = e.getTotalLength();
+        if (isDash.current) {
+          e.style.strokeDasharray = length / 2 + 'px';
+          e.style.strokeDashoffset = length + 'px';
+        }
+      });
+    } else {
+      animationsDash.current?.pause?.();
       document.querySelectorAll('.Monoton').forEach(e => {
         e.style.removeProperty('stroke-dasharray');
         e.style.removeProperty('stroke-offset');
       });
-    } else setupAnimation();
+    }
   };
 
   const onRGBChange = async e => {
@@ -260,14 +312,11 @@ export default function Monoton() {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
-      setupAnimation();
+      animationsRgb.current?.resume?.();
       return;
     }
 
-    animationsRgb.current.forEach(a => a.stop(0));
-    animationsRgb.current = [];
-
-    await sleep(100);
+    animationsRgb.current?.pause?.();
 
     pathes.forEach(e => {
       e.style.removeProperty('stroke');
