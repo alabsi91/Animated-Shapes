@@ -312,7 +312,7 @@ export default function Tunnel() {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
-      animationsRgb.current?.resume?.();
+      animationsRgb.current?.play?.();
       return;
     }
 

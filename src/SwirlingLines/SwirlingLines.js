@@ -328,7 +328,7 @@ export default function SwirlingLines() {
     isDash.current = e.target.checked;
     addUrlQuery({ isDash: e.target.checked });
     if (isDash.current) {
-      animationsDash.current?.resume?.();
+      animationsDash.current?.play?.();
       document.querySelectorAll('.SwirlingLines').forEach(e => {
         const length = e.getTotalLength();
         e.style.strokeDasharray = length * 0.1 + 'px';
@@ -356,7 +356,7 @@ export default function SwirlingLines() {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
-      animationsRgb.current?.resume?.();
+      animationsRgb.current?.play?.();
       return;
     }
 

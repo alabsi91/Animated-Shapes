@@ -293,7 +293,7 @@ export default function SSSSS() {
     isDash.current = e.target.checked;
     addUrlQuery({ isDash: e.target.checked });
     if (isDash.current) {
-      animationsDash.current?.resume?.();
+      animationsDash.current?.play?.();
       document.querySelectorAll('.SSSSS').forEach(e => {
         const length = e.getTotalLength();
         e.style.strokeDasharray = length / 3 + 'px';
@@ -321,7 +321,7 @@ export default function SSSSS() {
         e.style.stroke = 'red';
         if (isGlowing.current) e.style.filter = `drop-shadow(0px 0px var(--glow-trength) red)`;
       });
-      animationsRgb.current?.resume?.();
+      animationsRgb.current?.play?.();
       return;
     }
 
