@@ -17,7 +17,7 @@ export default function MultiSidedPolygon() {
   const isGlowing = useRef(parseUrl().isGlowing ?? false);
   const easing = useRef(parseUrl().easing ?? 'ease.inOut.quad');
   const delay = useRef(parseUrl().delay ?? 20);
-  const duration = useRef(parseUrl().duration ?? 6000);
+  const duration = useRef(parseUrl().duration ?? 3000);
   const isRotating = useRef(parseUrl().isRotating ?? true);
   const animations = useRef([]);
   const isDash = useRef(parseUrl().isDash ?? false);
@@ -149,7 +149,7 @@ export default function MultiSidedPolygon() {
       const a_dash = animare(
         {
           to: op.dash.to[0],
-          duration: duration.current,
+          duration: duration.current * 2,
           delay: op.dash.delay,
           direction: 'alternate',
           autoPlay: false,

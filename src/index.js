@@ -2,7 +2,7 @@
 /* eslint-disable no-unused-vars */
 import styles from './Loading.lazy.css';
 import './global.css';
-import { useState, useEffect, Suspense, lazy, createContext, StrictMode } from 'react';
+import { useState, useEffect, Suspense, lazy, createContext, StrictMode, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { animare, ease } from 'animare';
 
@@ -33,19 +33,21 @@ export const useLazyCss = styles => {
 const Loading = () => {
   useLazyCss(styles);
 
-  const animation = () => {
+  const animation = useRef()
+
+  const animate = () => {
     const outter = document.querySelector('.outter');
     const inner = document.querySelector('.inner');
-    animare({ to: 30, duration: 1000, repeat: -1, ease: ease.inOut.quad }, ([r]) => {
-      outter.style.width = `${r}vw`;
+    animation.current = animare({ to: [30, 30], duration: 1000, delay: [0, 20], repeat: -1, ease: ease.inOut.quad }, ([or, ir]) => {
+      outter.style.width = `${or}vw`;
+      inner.style.width = `${ir}vw`;
     });
-    animare({ to: 30, duration: 1000, delay: 20, repeat: -1, ease: ease.inOut.quad }, ([r]) => {
-      inner.style.width = `${r}vw`;
-    });
+
   };
 
   useEffect(() => {
-    animation();
+    animate();
+    return () => animation.current.pause();
   }, []);
 
   return (
